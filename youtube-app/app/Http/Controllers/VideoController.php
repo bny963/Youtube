@@ -14,14 +14,17 @@ class VideoController extends Controller
 
     public function store(Request $request)
     {
+        // user_id はバリデーションから外す（ユーザーに選ばせないため）
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'storage_path' => 'required|string',
             'thumbnail_path' => 'required|string',
         ]);
 
-        return Video::create($validated);
+        // ログイン中のユーザー( $request->user() )として動画を作成
+        $video = $request->user()->videos()->create($validated);
+
+        return response()->json($video, 201);
     }
 }
