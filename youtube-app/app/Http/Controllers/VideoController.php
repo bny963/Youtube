@@ -12,19 +12,30 @@ class VideoController extends Controller
         return response()->json(Video::all());
     }
 
-    public function store(Request $request)
+public function store(Request $request)
     {
-        // user_id はバリデーションから外す（ユーザーに選ばせないため）
-        $validated = $request->validate([
+        // 1. バリデーション（入力チェック）
+        $request->validate([
             'title' => 'required|string|max:255',
+            'url' => 'required|url',
             'description' => 'nullable|string',
-            'storage_path' => 'required|string',
-            'thumbnail_path' => 'required|string',
         ]);
 
-        // ログイン中のユーザー( $request->user() )として動画を作成
-        $video = $request->user()->videos()->create($validated);
+        // 2. データベースに保存
+        // auth:sanctumのおかげで $request->user() で投稿者を取得できます
+        $video = Video::create([
+            'user_id' => $request->user()->id,
+            'title' => $request->title,
+            'url' => $request->url,
+            'description' => $request->description ?? '',
+            'storage_path' => 'temporary_path',
+            'thumbnail_path' => 'temporary_thumb_path',
+        ]);
 
-        return response()->json($video, 201);
+        // 3. 結果を返す
+        return response()->json([
+            'message' => '動画を投稿しました！',
+            'video' => $video
+        ], 201);
     }
 }
