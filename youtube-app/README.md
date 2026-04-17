@@ -56,3 +56,31 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## データベース設計
+
+### users (ユーザー)
+- id: BIGINT (PK)
+- name: VARCHAR
+- email: VARCHAR (UNIQUE)
+- password: VARCHAR
+
+### videos (動画)
+- id: BIGINT (PK)
+- user_id: BIGINT (FK -> users.id)
+- title: VARCHAR
+- description: TEXT
+- storage_path: VARCHAR
+- thumbnail_path: VARCHAR
+- created_at: TIMESTAMP
+
+### comments (コメント)
+- id: BIGINT (PK)
+- video_id: BIGINT (FK -> videos.id)
+- user_id: BIGINT (FK -> users.id)
+- content: TEXT
+
+### likes (高評価)
+- id: BIGINT (PK)
+- video_id: BIGINT (FK -> videos.id)
+- user_id: BIGINT (FK -> users.id)
