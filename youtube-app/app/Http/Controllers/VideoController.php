@@ -12,30 +12,25 @@ class VideoController extends Controller
         return response()->json(Video::all());
     }
 
-public function store(Request $request)
+    public function store(Request $request)
     {
-        // 1. バリデーション（入力チェック）
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'url' => 'required|url',
-            'description' => 'nullable|string',
-        ]);
+        $path = null;
 
-        // 2. データベースに保存
-        // auth:sanctumのおかげで $request->user() で投稿者を取得できます
+        // Postmanの Key で指定する名前（例: video_file）と一致させる
+        if ($request->hasFile('video_file')) {
+            // 'videos' は保存先フォルダ名、'public' はディスク名
+            $path = $request->file('video_file')->store('videos', 'public');
+        }
+
         $video = Video::create([
             'user_id' => $request->user()->id,
             'title' => $request->title,
-            'url' => $request->url,
             'description' => $request->description ?? '',
-            'storage_path' => 'temporary_path',
+            'url' => $request->url,
+            'storage_path' => $path, // 保存されたパス（videos/xxx.mp4）が入る
             'thumbnail_path' => 'temporary_thumb_path',
         ]);
 
-        // 3. 結果を返す
-        return response()->json([
-            'message' => '動画を投稿しました！',
-            'video' => $video
-        ], 201);
+        return response()->json($video, 201);
     }
 }
