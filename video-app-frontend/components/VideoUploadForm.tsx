@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 // 💡 型を定義
 interface VideoUploadFormProps {
@@ -15,39 +16,48 @@ export default function VideoUploadForm({ onUploadSuccess }: VideoUploadFormProp
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!file) return alert('ファイルを選択してください');
+        if (!file) return toast.error('ファイルを選択してください');
 
-        setLoading(true);
+        // 1. データの準備
         const formData = new FormData();
         formData.append('title', title);
         formData.append('description', description);
         formData.append('video_file', file);
 
-        try {
-            const response = await fetch('http://localhost/api/videos', {
-                method: 'POST',
-                body: formData,
-                headers: { 'Accept': 'application/json' },
-            });
+        // 2. toast.promise で非同期処理全体を包む
+        await toast.promise(
+            // 第一引数：実行したい Promise（fetch処理）
+            (async () => {
+                setLoading(true); // ボタンの無効化のために維持
+                const response = await fetch('http://localhost/api/videos', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' },
+                });
 
-            if (response.ok) {
-                // 💡 投稿が成功したら親の一覧更新関数を呼ぶ！
+                if (!response.ok) {
+                    throw new Error('Upload failed'); // 失敗時はここを投げて error メッセージへ
+                }
+
+                // 成功時の後処理
                 onUploadSuccess();
-
                 setTitle('');
                 setDescription('');
                 setFile(null);
-                alert('アップロード成功！');
-            } else {
-                alert('アップロードに失敗しました');
-            }
-        } catch (error) {
-            alert('通信エラーが発生しました');
-        } finally {
-            setLoading(false);
-        }
-    };
+                setLoading(false);
 
+                return response; // 成功時はここが success メッセージへ
+            })(),
+            // 第二引数：各状態のメッセージ設定
+            {
+                loading: '動画をアップロード中...',
+                success: '動画を公開しました！ 🚀',
+                error: 'アップロードに失敗しました。',
+            }
+        ).finally(() => {
+            setLoading(false); // 念のため最後も確実に解除
+        });
+    };
     return (
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-xl border border-gray-100">
             <h2 className="text-xl font-bold mb-6 text-gray-800">新しい動画を投稿</h2>
