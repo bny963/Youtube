@@ -16,6 +16,8 @@ Route::get('/videos', [VideoController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/videos', [VideoController::class, 'store']);
 });
+// {video} の部分に動画のID（1とか2とか）が入ります
+Route::get('/videos/{video}', [VideoController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
     // 動画投稿はログインしている人だけ
     Route::post('/videos', [VideoController::class, 'store']);
