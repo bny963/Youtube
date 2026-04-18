@@ -9,10 +9,20 @@ use App\Http\Requests\UpdateVideoRequest;
 
 class VideoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // すべての動画を、作成日の新しい順に取得
-        $videos = Video::latest()->get();
+        // クエリビルダを開始
+        $query = Video::query();
+
+        // もしキーワード（keyword）が送られてきたら
+        if ($request->has('keyword')) {
+            $keyword = $request->input('keyword');
+            // タイトルに対して「あいまい検索」を実行
+            $query->where('title', 'LIKE', "%{$keyword}%");
+        }
+
+        // 最終的な結果を取得（最新順）
+        $videos = $query->latest()->get();
 
         return response()->json($videos);
     }
