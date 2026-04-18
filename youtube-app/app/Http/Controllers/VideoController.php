@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Video;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreVideoRequest;
+use App\Http\Requests\UpdateVideoRequest;
 
 class VideoController extends Controller
 {
@@ -42,5 +43,13 @@ class VideoController extends Controller
 
         // 204 No Content（成功したけど返す中身はないよ）を返すのが一般的
         return response()->json(null, 204);
+    }
+    public function update(UpdateVideoRequest $request, Video $video)
+    {
+        // バリデーション済みデータ（title や description）を取得して更新
+        $video->update($request->validated());
+
+        // 更新後の最新データを返す
+        return response()->json($video);
     }
 }

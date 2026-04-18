@@ -24,6 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 動画削除（{video} で統一。Controller側で Video $video として受け取れます）
     Route::delete('/videos/{video}', [VideoController::class, 'destroy']);
+    // 【追加】動画更新
+    Route::patch('/videos/{video}', [VideoController::class, 'update']);
 
     // ログアウト（この実装、スマートでいいですね！）
     Route::post('/logout', function (Request $request) {
