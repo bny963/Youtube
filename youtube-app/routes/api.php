@@ -19,12 +19,13 @@ Route::middleware('auth:sanctum')->group(function () {
 // {video} の部分に動画のID（1とか2とか）が入ります
 Route::get('/videos/{video}', [VideoController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
-    // 動画投稿はログインしている人だけ
+    // 動画投稿
     Route::post('/videos', [VideoController::class, 'store']);
-    // 動画削除もログインしている人だけ
-    Route::delete('/videos/{id}', [VideoController::class, 'destroy']);
 
-    // 【追加】ログアウトルートもここに入れると便利です
+    // 動画削除（{video} で統一。Controller側で Video $video として受け取れます）
+    Route::delete('/videos/{video}', [VideoController::class, 'destroy']);
+
+    // ログアウト（この実装、スマートでいいですね！）
     Route::post('/logout', function (Request $request) {
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'ログアウトしました']);
