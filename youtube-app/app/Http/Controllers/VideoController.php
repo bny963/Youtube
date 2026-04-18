@@ -10,10 +10,8 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class VideoController extends Controller
 {
-    // ★ これを追加（これで $this->authorize が使えるようになります）
     use AuthorizesRequests;
-
-    public function index(Request $request)
+    public function index()
     {
         $query = Video::query();
 
@@ -45,10 +43,15 @@ class VideoController extends Controller
     {
         return response()->json($video);
     }
+    public function destroy(Video $video)
+    {
+        $this->authorize('delete', $video);
+        // DBからレコードを削除
+        $video->delete();
 
     public function update(UpdateVideoRequest $request, Video $video)
     {
-        $this->authorize('update', $video);
+        $this->authorize('update', $video); // ここでチェック！ダメなら403エラー
 
         $video->update($request->validated());
         return response()->json($video);
