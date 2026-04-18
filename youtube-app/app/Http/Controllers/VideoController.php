@@ -10,9 +10,11 @@ class VideoController extends Controller
 {
     public function index()
     {
-        return response()->json(Video::all());
-    }
+        // すべての動画を、作成日の新しい順に取得
+        $videos = Video::latest()->get();
 
+        return response()->json($videos);
+    }
     public function store(StoreVideoRequest $request) // ここを書き換える
     {
         // ここに到達した時点で、バリデーション（ファイルの存在チェック）はパスしている
