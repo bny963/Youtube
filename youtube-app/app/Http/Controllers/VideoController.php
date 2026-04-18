@@ -30,4 +30,9 @@ class VideoController extends Controller
 
         return response()->json($video, 201);
     }
+    // Video $video と書くだけで、Laravelが自動でDBから探してくれます（ルートモデルバインディング）
+    public function show(Video $video)
+    {
+        return response()->json($video);
+    }
 }
