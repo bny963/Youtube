@@ -6,9 +6,11 @@ use App\Models\Video;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreVideoRequest;
 use App\Http\Requests\UpdateVideoRequest;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class VideoController extends Controller
 {
+    use AuthorizesRequests;
     public function index()
     {
         // すべての動画を、作成日の新しい順に取得
@@ -38,6 +40,7 @@ class VideoController extends Controller
     }
     public function destroy(Video $video)
     {
+        $this->authorize('delete', $video);
         // DBからレコードを削除
         $video->delete();
 
@@ -46,10 +49,9 @@ class VideoController extends Controller
     }
     public function update(UpdateVideoRequest $request, Video $video)
     {
-        // バリデーション済みデータ（title や description）を取得して更新
-        $video->update($request->validated());
+        $this->authorize('update', $video); // ここでチェック！ダメなら403エラー
 
-        // 更新後の最新データを返す
+        $video->update($request->validated());
         return response()->json($video);
     }
 }
