@@ -55,3 +55,15 @@ Route::post('/login', function (Request $request) {
         'token_type' => 'Bearer',
     ]);
 });
+// テスト用のユーザー作成ルート
+Route::post('/register', function (Request $request) {
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+    ]);
+
+    return response()->json([
+        'token' => $user->createToken('test-token')->plainTextToken
+    ]);
+});
