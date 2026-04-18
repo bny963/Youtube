@@ -35,4 +35,12 @@ class VideoController extends Controller
     {
         return response()->json($video);
     }
+    public function destroy(Video $video)
+    {
+        // DBからレコードを削除
+        $video->delete();
+
+        // 204 No Content（成功したけど返す中身はないよ）を返すのが一般的
+        return response()->json(null, 204);
+    }
 }
