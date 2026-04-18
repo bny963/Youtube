@@ -3,67 +3,40 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VideoController;
-use App\Models\User;                        // 追加
-use Illuminate\Support\Facades\Hash;        // 追加
-use Illuminate\Validation\ValidationException; // これを追加！
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
+/*
+|--------------------------------------------------------------------------
+| 公開ルート（ログイン不要）
+|--------------------------------------------------------------------------
+*/
 Route::get('/videos', [VideoController::class, 'index']);
-Route::post('/videos', [VideoController::class, 'store']);
-// 誰でも見られるルート
-Route::get('/videos', [VideoController::class, 'index']);
-
-// ログインが必要なルート（先ほど作った store など）
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/videos', [VideoController::class, 'store']);
-});
-// {video} の部分に動画のID（1とか2とか）が入ります
 Route::get('/videos/{video}', [VideoController::class, 'show']);
-Route::middleware('auth:sanctum')->group(function () {
-    // 動画投稿
-    Route::post('/videos', [VideoController::class, 'store']);
+// ★ 今だけここに置く（ログインなしで投稿可能にする）
+Route::post('/videos', [VideoController::class, 'store']);
 
-    // 動画削除（{video} で統一。Controller側で Video $video として受け取れます）
+Route::post('/login', function (Request $request) {
+    // ...ログイン処理（省略）
+});
+
+Route::post('/register', function (Request $request) {
+    // ...登録処理（省略）
+});
+
+/*
+|--------------------------------------------------------------------------
+| 保護されたルート（ログインが必要）
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth:sanctum')->group(function () {
+    // 削除や更新は守っておく
     Route::delete('/videos/{video}', [VideoController::class, 'destroy']);
-    // 【追加】動画更新
     Route::patch('/videos/{video}', [VideoController::class, 'update']);
 
-    // ログアウト（この実装、スマートでいいですね！）
     Route::post('/logout', function (Request $request) {
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'ログアウトしました']);
     });
-});
-
-// テスト用ログインルート
-Route::post('/login', function (Request $request) {
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
-
-    $user = User::where('email', $request->email)->first();
-
-    if (!$user || !Hash::check($request->password, $user->password)) {
-        throw ValidationException::withMessages([
-            'email' => ['認証情報が正しくありません。'],
-        ]);
-    }
-
-    // トークンを発行して返す
-    return response()->json([
-        'access_token' => $user->createToken('auth_token')->plainTextToken,
-        'token_type' => 'Bearer',
-    ]);
-});
-// テスト用のユーザー作成ルート
-Route::post('/register', function (Request $request) {
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-    ]);
-
-    return response()->json([
-        'token' => $user->createToken('test-token')->plainTextToken
-    ]);
 });

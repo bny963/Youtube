@@ -28,4 +28,12 @@ class StoreVideoRequest extends FormRequest
             'description' => 'nullable|string|max:1000',
         ];
     }
+    public function messages(): array
+    {
+        return [
+            'video_file.required' => '動画ファイルを選択してください。',
+            'video_file.max' => 'ファイルサイズは100MB以下にしてください。',
+            'video_file.mimetypes' => '対応している動画形式は mp4, mov, avi です。',
+        ];
+    }
 }
