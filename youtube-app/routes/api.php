@@ -9,7 +9,13 @@ use Illuminate\Validation\ValidationException; // これを追加！
 
 Route::get('/videos', [VideoController::class, 'index']);
 Route::post('/videos', [VideoController::class, 'store']);
+// 誰でも見られるルート
+Route::get('/videos', [VideoController::class, 'index']);
 
+// ログインが必要なルート（先ほど作った store など）
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/videos', [VideoController::class, 'store']);
+});
 Route::middleware('auth:sanctum')->group(function () {
     // 動画投稿はログインしている人だけ
     Route::post('/videos', [VideoController::class, 'store']);
