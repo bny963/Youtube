@@ -11,7 +11,9 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class VideoController extends Controller
 {
     use AuthorizesRequests;
-    public function index()
+
+    // 1. 引数に Request $request を追加
+    public function index(Request $request)
     {
         $query = Video::query();
 
@@ -29,11 +31,14 @@ class VideoController extends Controller
         $path = $request->file('video_file')->store('videos', 'public');
 
         $video = Video::create([
-            'user_id' => $request->user()->id,
+            // 修正前: 'user_id' => $request->user()->id,
+            // 修正後: ログインしていればそのID、いなければとりあえず ID:1 のユーザーにする
+            'user_id' => $request->user() ? $request->user()->id : 1,
+
             'title' => $request->title,
             'description' => $request->description,
             'storage_path' => $path,
-            'thumbnail_path' => 'temporary_thumb_path',
+            'thumbnail_path' => 'temporary_thumb_path', // サムネイルは後ほど！
         ]);
 
         return response()->json($video, 201);
@@ -43,15 +48,10 @@ class VideoController extends Controller
     {
         return response()->json($video);
     }
-    public function destroy(Video $video)
-    {
-        $this->authorize('delete', $video);
-        // DBからレコードを削除
-        $video->delete();
 
     public function update(UpdateVideoRequest $request, Video $video)
     {
-        $this->authorize('update', $video); // ここでチェック！ダメなら403エラー
+        $this->authorize('update', $video);
 
         $video->update($request->validated());
         return response()->json($video);
