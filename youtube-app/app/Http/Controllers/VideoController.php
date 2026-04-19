@@ -64,8 +64,12 @@ class VideoController extends Controller
         }
     }
 
-    public function show(Video $video)
+    public function show($id)
     {
+        // 指定されたIDの動画を探す。なければ404エラーを返す
+        $video = Video::findOrFail($id);
+
+        // 動画情報をJSONで返す
         return response()->json($video);
     }
 

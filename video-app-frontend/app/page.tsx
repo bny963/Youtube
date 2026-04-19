@@ -1,14 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import VideoPlayer from '@/components/VideoPlayer';
 import toast from 'react-hot-toast';
 import axios from '@/lib/axios';
-import Link from 'next/link'; // 💡 Linkをインポート
+import Link from 'next/link';
 
 export default function Home() {
   const [videos, setVideos] = useState<any[]>([]);
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [keyword, setKeyword] = useState('');
   const [user, setUser] = useState<any>(null);
 
@@ -39,7 +37,6 @@ export default function Home() {
     await toast.promise(
       axios.delete(`/api/videos/${id}`).then((res) => {
         fetchVideos(keyword);
-        setSelectedPath(null);
         return res;
       }),
       {
@@ -59,12 +56,11 @@ export default function Home() {
     <main className="min-h-screen p-8 bg-gray-50 text-gray-900">
       <div className="max-w-5xl mx-auto space-y-10">
 
-        {/* --- ヘッダー（ユーザー情報 + 投稿ボタン） --- */}
+        {/* --- ヘッダー --- */}
         <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <h1 className="text-xl font-bold text-gray-800">My Video App</h1>
 
           <div className="flex items-center gap-6">
-            {/* 💡 ログイン中のみ「投稿する」ボタンを表示 */}
             {user && (
               <Link
                 href="/videos/upload"
@@ -89,23 +85,10 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <a href="/login" className="text-blue-600 hover:underline text-sm font-medium">ログイン</a>
+              <Link href="/login" className="text-blue-600 hover:underline text-sm font-medium">ログイン</Link>
             )}
           </div>
         </div>
-
-        {/* --- 再生プレイヤー --- */}
-        {selectedPath && (
-          <div className="space-y-4 bg-white p-6 rounded-2xl shadow-lg border border-blue-100 animate-in fade-in slide-in-from-top-4 duration-300">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-blue-600">再生中</h2>
-              <button onClick={() => setSelectedPath(null)} className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-colors">✕ 閉じる</button>
-            </div>
-            <VideoPlayer storagePath={selectedPath} />
-          </div>
-        )}
-
-        {/* 💡 ここにあった VideoUploadForm は削除されました。専用ページ (/videos/upload) で管理します */}
 
         {/* --- 検索バー --- */}
         <div className="max-w-md mx-auto">
@@ -137,16 +120,18 @@ export default function Home() {
           {videos.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {videos.map((video) => (
-                <div
+                /* 💡 各動画カードを Link に変更。href を /videos/[id] に指定 */
+                <Link
                   key={video.id}
-                  className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer overflow-hidden border border-gray-100"
-                  onClick={() => setSelectedPath(video.storage_path)}
+                  href={`/videos/${video.id}`}
+                  className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden border border-gray-100 block"
                 >
                   {/* 削除ボタン */}
                   {user && video.user_id === user.id && (
                     <button
                       onClick={(e) => {
-                        e.stopPropagation();
+                        e.preventDefault(); // 💡 Linkへの遷移を防止
+                        e.stopPropagation(); // 💡 親要素へのイベント伝播を防止
                         handleDelete(video.id);
                       }}
                       className="absolute top-2 right-2 z-10 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-lg"
@@ -162,14 +147,13 @@ export default function Home() {
                     <span className="text-4xl group-hover:scale-110 transition-transform">▶️</span>
                   </div>
                   <div className="p-4">
-                    <h3 className="font-bold text-lg line-clamp-1 text-gray-800">{video.title}</h3>
+                    <h3 className="font-bold text-lg line-clamp-1 text-gray-800 group-hover:text-blue-600 transition-colors">{video.title}</h3>
                     <p className="text-sm text-gray-500 line-clamp-2 mt-1">{video.description}</p>
-                    {/* 💡 おまけ：投稿時間の表示などがあるとよりそれっぽくなります */}
                     <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-wider">
                       Uploaded at {new Date(video.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
