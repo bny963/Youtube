@@ -32,7 +32,6 @@ Route::post('/register', function (Request $request) {
 */
 Route::middleware('auth:sanctum')->group(function () {
     // 削除や更新は守っておく
-    Route::delete('/videos/{video}', [VideoController::class, 'destroy']);
     Route::patch('/videos/{video}', [VideoController::class, 'update']);
 
     Route::post('/logout', function (Request $request) {
@@ -40,3 +39,5 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['message' => 'ログアウトしました']);
     });
 });
+// 修正後: 開発中のテストとして認証を外す
+Route::delete('/videos/{video}', [VideoController::class, 'destroy']);
