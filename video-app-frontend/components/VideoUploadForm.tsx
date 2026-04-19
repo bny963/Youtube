@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import axios from '@/lib/axios'; // ✅ 設定済みのaxiosをインポート
 
-// 💡 型を定義
 interface VideoUploadFormProps {
     onUploadSuccess: () => void;
 }
@@ -18,52 +18,40 @@ export default function VideoUploadForm({ onUploadSuccess }: VideoUploadFormProp
         e.preventDefault();
         if (!file) return toast.error('ファイルを選択してください');
 
-        // 1. データの準備
         const formData = new FormData();
         formData.append('title', title);
         formData.append('description', description);
-        formData.append('video_file', file);
+        formData.append('video', file); // ✅ Laravel側の期待に合わせて 'video' に修正
 
-        // 2. toast.promise で非同期処理全体を包む
+        setLoading(true);
+
+        // 💡 toast.promise で axios の処理を包む
         await toast.promise(
-            // 第一引数：実行したい Promise（fetch処理）
-            (async () => {
-                setLoading(true); // ボタンの無効化のために維持
-                const response = await fetch('http://localhost/api/videos', {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'Accept': 'application/json' },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Upload failed'); // 失敗時はここを投げて error メッセージへ
-                }
-
-                // 成功時の後処理
-                onUploadSuccess();
-                setTitle('');
-                setDescription('');
-                setFile(null);
-                setLoading(false);
-
-                return response; // 成功時はここが success メッセージへ
-            })(),
-            // 第二引数：各状態のメッセージ設定
+            axios.post('/api/videos', formData), // ✅ 設定済みのaxiosならクッキーも自動で送られる
             {
                 loading: '動画をアップロード中...',
-                success: '動画を公開しました！ 🚀',
-                error: 'アップロードに失敗しました。',
+                success: () => {
+                    onUploadSuccess();
+                    setTitle('');
+                    setDescription('');
+                    setFile(null);
+                    return '動画を公開しました！ 🚀';
+                },
+                error: (err) => {
+                    console.error(err);
+                    return 'アップロードに失敗しました。';
+                },
             }
         ).finally(() => {
-            setLoading(false); // 念のため最後も確実に解除
+            setLoading(false);
         });
     };
+
     return (
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-xl border border-gray-100">
             <h2 className="text-xl font-bold mb-6 text-gray-800">新しい動画を投稿</h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* タイトル入力 */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">タイトル</label>
                     <input
@@ -76,7 +64,6 @@ export default function VideoUploadForm({ onUploadSuccess }: VideoUploadFormProp
                     />
                 </div>
 
-                {/* 説明入力 */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">説明</label>
                     <textarea
@@ -87,7 +74,6 @@ export default function VideoUploadForm({ onUploadSuccess }: VideoUploadFormProp
                     />
                 </div>
 
-                {/* ★ ここが復活ポイント：ファイル選択 ★ */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">動画ファイル (MP4/MOV)</label>
                     <input
@@ -99,13 +85,12 @@ export default function VideoUploadForm({ onUploadSuccess }: VideoUploadFormProp
                     />
                 </div>
 
-                {/* 送信ボタン */}
                 <button
                     type="submit"
                     disabled={loading}
                     className={`w-full py-3 px-6 text-white font-bold rounded-lg shadow-lg transition-all ${loading
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 active:scale-95'
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700 active:scale-95'
                         }`}
                 >
                     {loading ? 'アップロード中...' : 'アップロードを開始する'}
