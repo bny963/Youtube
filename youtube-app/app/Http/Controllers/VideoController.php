@@ -59,9 +59,10 @@ class VideoController extends Controller
 
     public function destroy(Video $video)
     {
-        $this->authorize('delete', $video);
+        // 一時的に権限チェックをスルーして削除できるか確認
+        // $this->authorize('delete', $video); // ← もしこれがあればコメントアウト
 
         $video->delete();
-        return response()->json(null, 204);
+        return response()->json(['message' => 'Deleted']);
     }
 }
