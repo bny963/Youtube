@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('title');            // title: VARCHAR
             $table->text('description');        // description: TEXT (長い文章用)
             $table->string('storage_path');     // storage_path: 動画の保存先
-            $table->string('thumbnail_path');   // thumbnail_path: サムネイルの保存先
+            $table->string('thumbnail_path')->nullable();   // thumbnail_path: サムネイルの保存先
 
             $table->timestamps(); // created_at, updated_at を自動作成
         });
