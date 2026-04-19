@@ -6,6 +6,7 @@ use App\Http\Controllers\VideoController; // 💡 末尾にセミコロンが必
 
 Route::get('videos', [VideoController::class, 'index']);
 Route::get('videos/{video}', [VideoController::class, 'show']);
+Route::apiResource('videos', VideoController::class);
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
