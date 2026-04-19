@@ -17,31 +17,51 @@ class VideoController extends Controller
     {
         $query = Video::query();
 
+        // 検索キーワードがある場合は絞り込む（これは残してOK）
         if ($request->has('keyword')) {
-            $keyword = $request->input('keyword');
-            $query->where('title', 'LIKE', "%{$keyword}%");
+            $query->where('title', 'LIKE', "%{$request->keyword}%");
         }
 
+        // 💡 全ユーザーの動画を最新順に取得する
         $videos = $query->latest()->get();
+
         return response()->json($videos);
     }
 
-    public function store(StoreVideoRequest $request)
+    public function store(Request $request)
     {
-        $path = $request->file('video_file')->store('videos', 'public');
+        try {
+            // バリデーション
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'video' => 'required|file|max:102400',
+            ]);
 
-        $video = Video::create([
-            // 修正前: 'user_id' => $request->user()->id,
-            // 修正後: ログインしていればそのID、いなければとりあえず ID:1 のユーザーにする
-            'user_id' => $request->user() ? $request->user()->id : 1,
+            // 💡 認証チェック：ログインしてなければここでエラーを出す
+            if (!auth()->check()) {
+                return response()->json(['debug_error' => 'ログインしていません'], 401);
+            }
 
-            'title' => $request->title,
-            'description' => $request->description,
-            'storage_path' => $path,
-            'thumbnail_path' => 'temporary_thumb_path', // サムネイルは後ほど！
-        ]);
+            $path = $request->file('video')->store('videos', 'public');
 
-        return response()->json($video, 201);
+            // 保存
+            $video = Video::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'storage_path' => $path,
+                'user_id' => auth()->id(),
+            ]);
+
+            return response()->json($video);
+
+        } catch (\Exception $e) {
+            // 💡 エラーが起きたら、その理由をフロントエンドに直接返す
+            return response()->json([
+                'debug_error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 500);
+        }
     }
 
     public function show(Video $video)
@@ -61,7 +81,9 @@ class VideoController extends Controller
     {
         // 一時的に権限チェックをスルーして削除できるか確認
         // $this->authorize('delete', $video); // ← もしこれがあればコメントアウト
-
+        if ($video->user_id !== Auth::id()) {
+            return response()->json(['message' => '権限がありません'], 403);
+        }
         $video->delete();
         return response()->json(['message' => 'Deleted']);
     }
