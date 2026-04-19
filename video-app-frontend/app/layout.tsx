@@ -25,8 +25,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body>
-        {/* 2. <body>の中ならどこでもOKですが、一番上に置いておくのが一般的です */}
+      {/* 💡 bodyタグに suppressHydrationWarning={true} を追加 */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning={true}>
+        {/* トースト通知の設定 */}
         <Toaster position="top-center" reverseOrder={false} />
         {children}
       </body>
