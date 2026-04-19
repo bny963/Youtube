@@ -7,22 +7,22 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StoreVideoRequest;
 use App\Http\Requests\UpdateVideoRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth; // Authファサードを追加
+use FFMpeg\FFMpeg;
+use FFMpeg\Coordinate\TimeCode;
 
 class VideoController extends Controller
 {
     use AuthorizesRequests;
 
-    // 1. 引数に Request $request を追加
     public function index(Request $request)
     {
         $query = Video::query();
 
-        // 検索キーワードがある場合は絞り込む（これは残してOK）
         if ($request->has('keyword')) {
             $query->where('title', 'LIKE', "%{$request->keyword}%");
         }
 
-        // 💡 全ユーザーの動画を最新順に取得する
         $videos = $query->latest()->get();
 
         return response()->json($videos);
@@ -34,28 +34,51 @@ class VideoController extends Controller
             // バリデーション
             $request->validate([
                 'title' => 'required|string|max:255',
-                'video' => 'required|file|max:102400',
+                'video' => 'required|file|max:102400', // 約100MB
             ]);
 
-            // 💡 認証チェック：ログインしてなければここでエラーを出す
             if (!auth()->check()) {
                 return response()->json(['debug_error' => 'ログインしていません'], 401);
             }
 
+            // 1. 動画を保存
             $path = $request->file('video')->store('videos', 'public');
 
-            // 保存
+            // 2. サムネイルのパスを生成 (例: videos/abc.mp4 -> thumbnails/abc.jpg)
+            $filename = pathinfo($path, PATHINFO_FILENAME);
+            $thumbnailPath = 'thumbnails/' . $filename . '.jpg';
+
+            // 3. FFmpegでサムネイルを生成
+            try {
+                // Sail環境の標準的なパスを指定
+                $ffmpeg = FFMpeg::create([
+                    'ffmpeg.binaries' => '/usr/bin/ffmpeg',
+                    'ffprobe.binaries' => '/usr/bin/ffprobe',
+                ]);
+
+                $video = $ffmpeg->open(storage_path('app/public/' . $path));
+
+                // 1秒目のフレームを切り出して保存
+                $video->frame(TimeCode::fromSeconds(1))
+                    ->save(storage_path('app/public/' . $thumbnailPath));
+            } catch (\Exception $e) {
+                // サムネイル生成に失敗しても動画投稿自体は進めるため、ログ出力に留める
+                \Log::error("サムネイル生成失敗: " . $e->getMessage());
+                $thumbnailPath = null;
+            }
+
+            // 4. DBに保存（thumbnail_pathを追加）
             $video = Video::create([
                 'title' => $request->title,
                 'description' => $request->description,
                 'storage_path' => $path,
+                'thumbnail_path' => $thumbnailPath, // ここを忘れずに
                 'user_id' => auth()->id(),
             ]);
 
             return response()->json($video);
 
         } catch (\Exception $e) {
-            // 💡 エラーが起きたら、その理由をフロントエンドに直接返す
             return response()->json([
                 'debug_error' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -63,7 +86,6 @@ class VideoController extends Controller
             ], 500);
         }
     }
-
     public function show($id)
     {
         // 指定されたIDの動画を探す。なければ404エラーを返す
