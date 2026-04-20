@@ -15,4 +15,5 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('videos', [VideoController::class, 'store']);
     Route::delete('videos/{video}', [VideoController::class, 'destroy']);
+    Route::get('/user/videos', [VideoController::class, 'userVideos']);
 });

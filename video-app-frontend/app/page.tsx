@@ -74,6 +74,14 @@ export default function Home() {
                 <span className="text-sm font-medium hidden sm:inline">作成</span>
               </Link>
             )}
+            {user && (
+              <div className="flex items-center gap-4">
+                <Link href="/manage" className="text-sm font-medium text-gray-600 hover:text-black">
+                  動画の管理
+                </Link>
+                {/* ... 既存のアイコンなど ... */}
+              </div>
+            )}
 
             {user ? (
               <div className="flex items-center gap-3">
@@ -176,7 +184,10 @@ export default function Home() {
                       </h3>
                       <div className="text-[12px] text-gray-600 flex flex-col">
                         <span className="hover:text-gray-900 truncate">{video.user?.name || '匿名ユーザー'}</span>
-                        <p>1.2万回視聴 • {new Date(video.created_at).toLocaleDateString()}</p>
+                        <p>
+                          {/* views が無い場合は 0 を表示するようにガードを入れる */}
+                          {(video.views ?? 0).toLocaleString()}回視聴 • {new Date(video.created_at).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
                   </div>
