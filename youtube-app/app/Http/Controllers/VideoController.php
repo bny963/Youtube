@@ -181,4 +181,11 @@ class VideoController extends Controller
             throw $e;
         }
     }
+    public function userVideos()
+    {
+        // 💡 ログインしているユーザーの動画だけを最新順で取得
+        $videos = Video::where('user_id', auth()->id())->latest()->get();
+
+        return response()->json($videos);
+    }
 }
