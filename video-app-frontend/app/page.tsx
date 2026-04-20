@@ -32,7 +32,8 @@ export default function Home() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('この動画を完全に削除してもよろしいですか？')) return;
+    // ストレージからも消えることを明示
+    if (!confirm('この動画とサムネイルをサーバーから完全に削除しますか？\nこの操作は取り消せません。')) return;
 
     await toast.promise(
       axios.delete(`/api/videos/${id}`).then((res) => {
@@ -40,8 +41,8 @@ export default function Home() {
         return res;
       }),
       {
-        loading: '削除しています...',
-        success: '動画を削除しました',
+        loading: 'サーバーからファイルを削除中...',
+        success: '動画データを完全に消去しました',
         error: '削除に失敗しました。',
       }
     );
