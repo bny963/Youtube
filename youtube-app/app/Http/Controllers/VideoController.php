@@ -93,11 +93,19 @@ class VideoController extends Controller
 
     public function show($id)
     {
-        // 指定されたIDの動画を探す。なければ404エラーを返す
+        // 1. まず動画を探す。見つからなければここで404を返してくれる
         $video = Video::findOrFail($id);
 
-        // 動画情報をJSONで返す
-        return response()->json($video);
+        try {
+            // 2. views カラムが存在する場合のみインクリメント
+            // もしマイグレーションが失敗していても、ここで500エラーになるのを防ぐために try-catch を推奨
+            $video->increment('views');
+        } catch (\Exception $e) {
+            \Log::error("視聴回数の更新に失敗: " . $e->getMessage());
+        }
+
+        // 3. ユーザー情報を含めて返す
+        return response()->json($video->load('user'));
     }
 
     public function update(UpdateVideoRequest $request, Video $video)
@@ -113,32 +121,27 @@ class VideoController extends Controller
      */
     public function destroy(Video $video)
     {
-        // 💡 ログインユーザー本人の動画かチェック（セキュリティ）
         if ($video->user_id !== auth()->id()) {
             return response()->json(['message' => '権限がありません'], 403);
         }
 
         try {
-            // 1. 動画ファイルの削除
-            if ($video->video_path && Storage::disk('public')->exists($video->video_path)) {
-                Storage::disk('public')->delete($video->video_path);
+            // 💡 $video->video_path を $video->storage_path に修正
+            if ($video->storage_path && Storage::disk('public')->exists($video->storage_path)) {
+                Storage::disk('public')->delete($video->storage_path);
             }
 
-            // 2. サムネイル画像の削除 (自動生成されたもの)
             if ($video->thumbnail_path && Storage::disk('public')->exists($video->thumbnail_path)) {
                 Storage::disk('public')->delete($video->thumbnail_path);
             }
 
-            // 3. 最後にデータベースのレコードを削除
             $video->delete();
 
             return response()->json(['message' => '動画とファイルを完全に削除しました']);
-
         } catch (\Exception $e) {
             return response()->json(['message' => '削除中にエラーが発生しました'], 500);
         }
     }
-
     /**
      * サムネイル画像を生成（1秒地点のフレームを抽出）
      */
