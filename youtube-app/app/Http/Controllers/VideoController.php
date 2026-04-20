@@ -113,37 +113,29 @@ class VideoController extends Controller
      */
     public function destroy(Video $video)
     {
+        // 💡 ログインユーザー本人の動画かチェック（セキュリティ）
+        if ($video->user_id !== auth()->id()) {
+            return response()->json(['message' => '権限がありません'], 403);
+        }
+
         try {
-            // 権限チェック
-            if ($video->user_id !== Auth::id()) {
-                return response()->json(['message' => '権限がありません'], 403);
+            // 1. 動画ファイルの削除
+            if ($video->video_path && Storage::disk('public')->exists($video->video_path)) {
+                Storage::disk('public')->delete($video->video_path);
             }
 
-            // ストレージから動画ファイルを削除
-            if ($video->storage_path && Storage::disk('public')->exists($video->storage_path)) {
-                Storage::disk('public')->delete($video->storage_path);
-            }
-
-            // ストレージからサムネイル画像を削除
+            // 2. サムネイル画像の削除 (自動生成されたもの)
             if ($video->thumbnail_path && Storage::disk('public')->exists($video->thumbnail_path)) {
                 Storage::disk('public')->delete($video->thumbnail_path);
             }
 
-            // データベースから削除
+            // 3. 最後にデータベースのレコードを削除
             $video->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => '動画が削除されました',
-            ]);
+            return response()->json(['message' => '動画とファイルを完全に削除しました']);
 
         } catch (\Exception $e) {
-            \Log::error('Video deletion error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => '削除中にエラーが発生しました',
-            ], 500);
+            return response()->json(['message' => '削除中にエラーが発生しました'], 500);
         }
     }
 
