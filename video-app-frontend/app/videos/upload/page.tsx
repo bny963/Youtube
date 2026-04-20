@@ -11,6 +11,7 @@ export default function UploadPage() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
 
     // ログインチェック
     useEffect(() => {
@@ -20,7 +21,7 @@ export default function UploadPage() {
                 setUser(res.data);
             } catch (err) {
                 toast.error('ログインが必要です');
-                router.push('/login'); // 未ログインならログイン画面へ
+                router.push('/login');
             } finally {
                 setLoading(false);
             }
@@ -29,12 +30,33 @@ export default function UploadPage() {
     }, [router]);
 
     const handleSuccess = () => {
-        toast.success('ホーム画面に戻ります');
-        router.push('/'); // 成功したらトップへ
-        router.refresh(); // データを最新にする
+        toast.success('アップロードが完了しました');
+        setIsUploading(false);
+        router.push('/');
+        router.refresh();
     };
 
-    if (loading) return <div className="p-8 text-center">読み込み中...</div>;
+    // ゴール1: バリデーションエラーの内容をフロントエンドで表示
+    const handleValidationError = (validationErrors: Record<string, string[]>) => {
+        // バックエンドからのバリデーションエラーを表示
+        Object.entries(validationErrors).forEach(([field, messages]) => {
+            messages.forEach(message => {
+                toast.error(message);
+            });
+        });
+        setIsUploading(false);
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">読み込み中...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <main className="min-h-screen p-8 bg-gray-50 text-gray-900">
@@ -44,10 +66,24 @@ export default function UploadPage() {
                 <div className="flex items-center gap-4">
                     <Link
                         href="/"
-                        className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                        className="p-2 hover:bg-gray-200 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="戻る"
+                        onClick={(e) => isUploading && e.preventDefault()}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            aria-hidden="true"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            />
                         </svg>
                     </Link>
                     <h1 className="text-2xl font-bold">動画のアップロード</h1>
@@ -58,14 +94,32 @@ export default function UploadPage() {
                         動画ファイルを選択して、タイトルと説明文を入力してください。
                     </p>
 
-                    {/* 既存のフォームコンポーネントを再利用 */}
-                    <VideoUploadForm onUploadSuccess={handleSuccess} />
+                    {/* ゴール1・3: ファイル制限情報を事前表示 */}
+                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-900">
+                            <span className="font-semibold">📋 ファイル要件:</span>
+                        </p>
+                        <ul className="text-sm text-blue-800 mt-2 space-y-1 ml-4">
+                            <li>✓ 対応形式: MP4, MOV, AVI, MKV</li>
+                            <li>✓ 最大サイズ: 50MB</li>
+                        </ul>
+                    </div>
+
+                    {/* ゴール2・3: ローディング状態の表示と二重送信防止 */}
+                    <VideoUploadForm
+                        onUploadSuccess={handleSuccess}
+                        onValidationError={handleValidationError}
+                        onUploadStart={() => setIsUploading(true)}
+                        onUploadEnd={() => setIsUploading(false)}
+                        isUploading={isUploading}
+                    />
                 </div>
 
                 <div className="text-center">
                     <button
                         onClick={() => router.push('/')}
-                        className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                        disabled={isUploading}
+                        className="text-sm text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         キャンセルして戻る
                     </button>

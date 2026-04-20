@@ -53,47 +53,53 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen p-8 bg-gray-50 text-gray-900">
-      <div className="max-w-5xl mx-auto space-y-10">
+    /* 💡 bg-white に変更し、パディングを調整 */
+    <main className="min-h-screen bg-white text-gray-900">
+      {/* 💡 max-w-5xl (1024px) をやめて、max-w-[1800px] くらいまで広げる */}
+      <div className="max-w-[1800px] mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
 
-        {/* --- ヘッダー --- */}
-        <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-          <h1 className="text-xl font-bold text-gray-800">My Video App</h1>
-
-          <div className="flex items-center gap-6">
+        {/* --- ヘッダー (デザイン微調整) --- */}
+        <div className="flex justify-between items-center bg-white py-2">
+          <h1 className="text-xl font-bold tracking-tighter text-gray-900 flex items-center gap-1">
+            <span className="text-red-600 text-2xl">▶</span> MyTube
+          </h1>
+          <div className="flex items-center gap-4">
             {user && (
               <Link
                 href="/videos/upload"
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md active:scale-95"
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-all"
               >
-                <span className="text-lg">＋</span>
-                <span className="font-medium">投稿する</span>
+                <span className="text-xl">＋</span>
+                <span className="text-sm font-medium hidden sm:inline">作成</span>
               </Link>
             )}
 
             {user ? (
-              <div className="flex items-center gap-4 text-sm border-l pl-6 border-gray-200">
-                <span className="font-medium text-gray-600">ようこそ、{user.name} さん</span>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-bold">
+                  {user.name.charAt(0)}
+                </div>
                 <button
                   onClick={async () => {
                     await axios.post('/logout');
                     window.location.reload();
                   }}
-                  className="px-3 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                  className="text-xs text-gray-500 hover:text-red-600"
                 >
                   ログアウト
                 </button>
               </div>
             ) : (
-              <Link href="/login" className="text-blue-600 hover:underline text-sm font-medium">ログイン</Link>
+              <Link href="/login" className="px-4 py-1.5 border border-blue-600 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50">
+                ログイン
+              </Link>
             )}
           </div>
         </div>
 
-        {/* --- 検索バー --- */}
-        <div className="max-w-md mx-auto">
-          <div className="relative group">
-            <span className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors">🔍</span>
+        {/* --- 検索バー (中央寄せ) --- */}
+        <div className="max-w-2xl mx-auto w-full">
+          <div className="flex group">
             <input
               type="text"
               value={keyword}
@@ -102,63 +108,83 @@ export default function Home() {
                 setKeyword(val);
                 fetchVideos(val);
               }}
-              placeholder="見たい動画を検索..."
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-full shadow-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              placeholder="検索"
+              className="w-full pl-5 pr-4 py-2 bg-white border border-gray-300 rounded-l-full focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner"
             />
+            <button className="px-6 bg-gray-50 border border-l-0 border-gray-300 rounded-r-full hover:bg-gray-100">
+              🔍
+            </button>
           </div>
         </div>
 
         {/* --- 動画一覧 --- */}
         <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold border-l-4 border-blue-500 pl-4">
-              {keyword ? `「${keyword}」の検索結果` : '動画一覧'}
-            </h2>
-            <span className="text-sm text-gray-500 font-mono">{videos.length} items</span>
-          </div>
-
           {videos.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            /* 💡 カラム数をさらに細かく刻み、画面が広がるほど列を増やして1枚を小さく保つ */
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-x-4 gap-y-10">
               {videos.map((video) => (
-                /* 💡 各動画カードを Link に変更。href を /videos/[id] に指定 */
                 <Link
                   key={video.id}
                   href={`/videos/${video.id}`}
-                  className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden border border-gray-100 block"
+                  /* 💡 ここが超重要！max-w-[320px] を指定して、これ以上デカくならないように制限する */
+                  /* mx-auto sm:mx-0 で、スマホでは中央寄せ、PCでは左詰めにします */
+                  className="group flex flex-col w-full max-w-[320px] mx-auto sm:mx-0 transition-all"
                 >
-                  {/* 削除ボタン */}
-                  {user && video.user_id === user.id && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault(); // 💡 Linkへの遷移を防止
-                        e.stopPropagation(); // 💡 親要素へのイベント伝播を防止
-                        handleDelete(video.id);
-                      }}
-                      className="absolute top-2 right-2 z-10 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-lg"
-                      title="削除"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
+                  {/* サムネイル：16:9を維持 */}
+                  <div className="relative aspect-video w-full bg-slate-100 rounded-xl overflow-hidden mb-3">
+                    {video.thumbnail_path ? (
+                      <img
+                        src={`http://localhost/storage/${video.thumbnail_path}`}
+                        alt={video.title}
+                        className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                        <span className="text-xl opacity-30">▶️</span>
+                      </div>
+                    )}
 
-                  <div className="aspect-video bg-slate-200 flex items-center justify-center group-hover:bg-slate-300 transition-colors">
-                    <span className="text-4xl group-hover:scale-110 transition-transform">▶️</span>
+                    {/* 削除ボタン */}
+                    {user && video.user_id === user.id && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDelete(video.id);
+                        }}
+                        className="absolute top-2 right-2 z-10 p-1.5 bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg line-clamp-1 text-gray-800 group-hover:text-blue-600 transition-colors">{video.title}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 mt-1">{video.description}</p>
-                    <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-wider">
-                      Uploaded at {new Date(video.created_at).toLocaleDateString()}
-                    </p>
+
+                  {/* メタデータ */}
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm">
+                        {video.user?.name ? video.user.name.charAt(0) : 'U'}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col pr-2 overflow-hidden">
+                      <h3 className="font-semibold text-[14px] line-clamp-2 text-gray-900 leading-snug mb-1 group-hover:text-blue-700">
+                        {video.title}
+                      </h3>
+                      <div className="text-[12px] text-gray-600 flex flex-col">
+                        <span className="hover:text-gray-900 truncate">{video.user?.name || '匿名ユーザー'}</span>
+                        <p>1.2万回視聴 • {new Date(video.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-              <p className="text-gray-400">該当する動画が見つかりませんでした 😢</p>
+            <div className="text-center py-20 text-gray-400">
+              該当する動画が見つかりませんでした
             </div>
           )}
         </section>

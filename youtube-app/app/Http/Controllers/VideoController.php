@@ -7,13 +7,24 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StoreVideoRequest;
 use App\Http\Requests\UpdateVideoRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Auth; // Authファサードを追加
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use FFMpeg\FFMpeg;
 use FFMpeg\Coordinate\TimeCode;
 
 class VideoController extends Controller
 {
     use AuthorizesRequests;
+
+    // ゴール1: ファイル制限の定義
+    private const ALLOWED_EXTENSIONS = ['mp4', 'mov', 'avi', 'mkv'];
+    private const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    private const MIME_TYPES = [
+        'video/mp4' => 'mp4',
+        'video/quicktime' => 'mov',
+        'video/x-msvideo' => 'avi',
+        'video/x-matroska' => 'mkv',
+    ];
 
     public function index(Request $request)
     {
@@ -28,64 +39,58 @@ class VideoController extends Controller
         return response()->json($videos);
     }
 
-    public function store(Request $request)
+    /**
+     * 動画を保存
+     * ゴール1・2: バリデーション強化とエラーハンドリング
+     */
+    public function store(StoreVideoRequest $request)
     {
         try {
-            // バリデーション
-            $request->validate([
-                'title' => 'required|string|max:255',
-                'video' => 'required|file|max:102400', // 約100MB
-            ]);
+            // StoreVideoRequest が自動的にバリデーションを実行
+            $validated = $request->validated();
 
             if (!auth()->check()) {
-                return response()->json(['debug_error' => 'ログインしていません'], 401);
+                return response()->json(['message' => 'ログインが必要です'], 401);
             }
 
-            // 1. 動画を保存
-            $path = $request->file('video')->store('videos', 'public');
+            // 1. 動画を保存（'video_file' キーを使用）
+            $videoFile = $request->file('video_file');
+            $path = $videoFile->store('videos', 'public');
 
-            // 2. サムネイルのパスを生成 (例: videos/abc.mp4 -> thumbnails/abc.jpg)
-            $filename = pathinfo($path, PATHINFO_FILENAME);
-            $thumbnailPath = 'thumbnails/' . $filename . '.jpg';
-
-            // 3. FFmpegでサムネイルを生成
+            // 2. サムネイルを生成
+            $thumbnailPath = null;
             try {
-                // Sail環境の標準的なパスを指定
-                $ffmpeg = FFMpeg::create([
-                    'ffmpeg.binaries' => '/usr/bin/ffmpeg',
-                    'ffprobe.binaries' => '/usr/bin/ffprobe',
-                ]);
-
-                $video = $ffmpeg->open(storage_path('app/public/' . $path));
-
-                // 1秒目のフレームを切り出して保存
-                $video->frame(TimeCode::fromSeconds(1))
-                    ->save(storage_path('app/public/' . $thumbnailPath));
+                $thumbnailPath = $this->generateThumbnail($path);
             } catch (\Exception $e) {
-                // サムネイル生成に失敗しても動画投稿自体は進めるため、ログ出力に留める
-                \Log::error("サムネイル生成失敗: " . $e->getMessage());
-                $thumbnailPath = null;
+                \Log::warning('Thumbnail generation failed: ' . $e->getMessage());
             }
 
-            // 4. DBに保存（thumbnail_pathを追加）
+            // 3. DBに保存
             $video = Video::create([
-                'title' => $request->title,
-                'description' => $request->description,
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
                 'storage_path' => $path,
-                'thumbnail_path' => $thumbnailPath, // ここを忘れずに
+                'thumbnail_path' => $thumbnailPath,
                 'user_id' => auth()->id(),
             ]);
 
-            return response()->json($video);
+            return response()->json([
+                'success' => true,
+                'message' => '動画がアップロードされました',
+                'data' => $video,
+            ], 201);
 
         } catch (\Exception $e) {
+            \Log::error('Video upload error: ' . $e->getMessage());
+
             return response()->json([
-                'debug_error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'success' => false,
+                'message' => 'アップロード中にエラーが発生しました',
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
+
     public function show($id)
     {
         // 指定されたIDの動画を探す。なければ404エラーを返す
@@ -103,14 +108,82 @@ class VideoController extends Controller
         return response()->json($video);
     }
 
+    /**
+     * 動画を削除
+     */
     public function destroy(Video $video)
     {
-        // 一時的に権限チェックをスルーして削除できるか確認
-        // $this->authorize('delete', $video); // ← もしこれがあればコメントアウト
-        if ($video->user_id !== Auth::id()) {
-            return response()->json(['message' => '権限がありません'], 403);
+        try {
+            // 権限チェック
+            if ($video->user_id !== Auth::id()) {
+                return response()->json(['message' => '権限がありません'], 403);
+            }
+
+            // ストレージから動画ファイルを削除
+            if ($video->storage_path && Storage::disk('public')->exists($video->storage_path)) {
+                Storage::disk('public')->delete($video->storage_path);
+            }
+
+            // ストレージからサムネイル画像を削除
+            if ($video->thumbnail_path && Storage::disk('public')->exists($video->thumbnail_path)) {
+                Storage::disk('public')->delete($video->thumbnail_path);
+            }
+
+            // データベースから削除
+            $video->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => '動画が削除されました',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Video deletion error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => '削除中にエラーが発生しました',
+            ], 500);
         }
-        $video->delete();
-        return response()->json(['message' => 'Deleted']);
+    }
+
+    /**
+     * サムネイル画像を生成（1秒地点のフレームを抽出）
+     */
+    private function generateThumbnail($videoPath)
+    {
+        try {
+            // 保存済み動画の実パスを取得
+            $fullVideoPath = storage_path('app/public/' . $videoPath);
+
+            // FFMpegインスタンスを作成
+            $ffmpeg = FFMpeg::create([
+                'ffmpeg.binaries' => '/usr/bin/ffmpeg',
+                'ffprobe.binaries' => '/usr/bin/ffprobe',
+            ]);
+
+            // 動画を開く
+            $video = $ffmpeg->open($fullVideoPath);
+
+            // ファイル名を取得
+            $filename = pathinfo($videoPath, PATHINFO_FILENAME);
+            $thumbnailRelativePath = 'thumbnails/' . $filename . '.jpg';
+            $thumbnailFullPath = storage_path('app/public/' . $thumbnailRelativePath);
+
+            // ディレクトリが存在しない場合は作成
+            if (!is_dir(dirname($thumbnailFullPath))) {
+                mkdir(dirname($thumbnailFullPath), 0755, true);
+            }
+
+            // 1秒地点のフレームを抽出して保存
+            $video->frame(TimeCode::fromSeconds(1))
+                ->save($thumbnailFullPath);
+
+            return $thumbnailRelativePath;
+
+        } catch (\Exception $e) {
+            \Log::warning('Failed to generate thumbnail: ' . $e->getMessage());
+            throw $e;
+        }
     }
 }
