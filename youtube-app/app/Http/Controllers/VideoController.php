@@ -11,9 +11,20 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use FFMpeg\FFMpeg;
 use FFMpeg\Coordinate\TimeCode;
+use App\Models\User;
 
 class VideoController extends Controller
 {
+    public function userProfile(User $user)
+    {
+        // ユーザー情報と、そのユーザーに紐づく動画を最新順で取得
+        // load('videos') を使うことで、一回のクエリで取得できます
+        return response()->json([
+            'user' => $user,
+            'videos' => $user->videos()->with('user')->latest()->get()
+        ]);
+    }
+    
     use AuthorizesRequests;
 
     // ゴール1: ファイル制限の定義
