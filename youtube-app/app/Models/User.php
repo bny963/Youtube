@@ -17,8 +17,7 @@ use App\Models\Video;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
     
 
     /**

@@ -4,7 +4,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VideoController; 
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 
+Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::get('videos', [VideoController::class, 'index']);
 Route::get('videos/{video}', [VideoController::class, 'show']);
 Route::apiResource('videos', VideoController::class);
