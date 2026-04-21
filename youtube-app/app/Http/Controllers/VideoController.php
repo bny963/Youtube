@@ -24,7 +24,7 @@ class VideoController extends Controller
             'videos' => $user->videos()->with('user')->latest()->get()
         ]);
     }
-    
+
     use AuthorizesRequests;
 
     // ゴール1: ファイル制限の定義
@@ -110,19 +110,29 @@ class VideoController extends Controller
 
     public function show($id)
     {
-        // 1. まず動画を探す。見つからなければここで404を返してくれる
-        $video = Video::findOrFail($id);
+        // 1. 動画を探し、投稿者(user)の情報も一緒に読み込む
+        $video = Video::with('user')->findOrFail($id);
 
         try {
-            // 2. views カラムが存在する場合のみインクリメント
-            // もしマイグレーションが失敗していても、ここで500エラーになるのを防ぐために try-catch を推奨
+            // 2. 視聴回数をインクリメント
             $video->increment('views');
         } catch (\Exception $e) {
             \Log::error("視聴回数の更新に失敗: " . $e->getMessage());
         }
 
-        // 3. ユーザー情報を含めて返す
-        return response()->json($video->load('user'));
+        // 3. 関連動画を取得（同じ投稿者の他の動画、最大10件、自分自身は除く）
+        $relatedVideos = Video::where('user_id', $video->user_id)
+            ->where('id', '!=', $video->id)
+            ->with('user')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // 4. まとめて返却
+        return response()->json([
+            'video' => $video,
+            'relatedVideos' => $relatedVideos
+        ]);
     }
 
     public function update(UpdateVideoRequest $request, Video $video)
