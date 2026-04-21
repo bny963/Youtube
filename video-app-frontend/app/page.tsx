@@ -91,7 +91,13 @@ function VideoCard({ video, user, onDelete }: VideoCardProps) {
             {video.title}
           </h3>
           <div className="text-[14px] text-gray-600 flex flex-col">
-            <span className="hover:text-gray-900 truncate">{video.user?.name || '匿名ユーザー'}</span>
+            <Link
+              href={`/users/${video.user_id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="hover:text-blue-600 font-medium transition-colors"
+            >
+              {video.user?.name || '匿名ユーザー'}
+            </Link>
             <p>
               {(video.views ?? 0).toLocaleString()}回視聴 • {new Date(video.created_at).toLocaleDateString()}
             </p>
