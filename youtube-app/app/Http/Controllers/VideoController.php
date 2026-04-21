@@ -28,17 +28,22 @@ class VideoController extends Controller
 
     public function index(Request $request)
     {
-        $query = Video::query();
+        $query = Video::with('user');
 
-        if ($request->has('keyword')) {
-            $query->where('title', 'LIKE', "%{$request->keyword}%");
+        // デバッグ用：何が届いているかログに出す（storage/logs/laravel.log で確認可能）
+        // \Log::info($request->all());
+
+        if ($request->filled('keyword')) {
+            $query->where('title', 'like', '%' . $request->keyword . '%');
         }
 
-        $videos = $query->latest()->get();
+        // 💡 ここが重要！フロントの 'すべて' と DB の値が一致しているか
+        if ($request->filled('category') && $request->category !== 'すべて') {
+            $query->where('category', $request->category);
+        }
 
-        return response()->json($videos);
+        return $query->latest()->get();
     }
-
     /**
      * 動画を保存
      * ゴール1・2: バリデーション強化とエラーハンドリング
@@ -53,25 +58,26 @@ class VideoController extends Controller
                 return response()->json(['message' => 'ログインが必要です'], 401);
             }
 
-            // 1. 動画を保存（'video_file' キーを使用）
+            // 1. 動画を保存
             $videoFile = $request->file('video_file');
-            $path = $videoFile->store('videos', 'public');
+            $path = $videoFile->store('videos', 'public'); // $path として定義
 
             // 2. サムネイルを生成
             $thumbnailPath = null;
             try {
-                $thumbnailPath = $this->generateThumbnail($path);
+                $thumbnailPath = $this->generateThumbnail($path); // ここも $path を渡す
             } catch (\Exception $e) {
                 \Log::warning('Thumbnail generation failed: ' . $e->getMessage());
             }
 
             // 3. DBに保存
             $video = Video::create([
-                'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'storage_path' => $path,
-                'thumbnail_path' => $thumbnailPath,
                 'user_id' => auth()->id(),
+                'title' => $request->title,
+                'description' => $request->description,
+                'category' => $request->category,
+                'storage_path' => $path,           // ✅ $videoPath ではなく $path に修正！
+                'thumbnail_path' => $thumbnailPath,
             ]);
 
             return response()->json([

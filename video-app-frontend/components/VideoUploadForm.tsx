@@ -21,6 +21,7 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 interface VideoFormData {
     title: string;
     description: string;
+    category: string; // 💡 追加
 }
 
 export default function VideoUploadForm({
@@ -101,6 +102,7 @@ export default function VideoUploadForm({
             formData.append('video_file', selectedFile); // 'video' から 'video_file' に変更
             formData.append('title', data.title);
             formData.append('description', data.description);
+            formData.append('category', data.category); // 💡 追加
 
             // ゴール3: アップロード中のローディング状態を表示
             const response = await axios.post('/api/videos', formData, {
@@ -272,6 +274,29 @@ export default function VideoUploadForm({
                 )}
             </div>
 
+            {/* カテゴリー選択 */}
+            <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                    カテゴリー <span className="text-red-500">*</span>
+                </label>
+                <select
+                    disabled={isUploading}
+                    {...register('category', { required: 'カテゴリーを選択してください' })}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 disabled:cursor-not-allowed ${errors.category ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                >
+                    <option value="">カテゴリーを選択してください</option>
+                    {['すべて', 'プログラミング', 'ゲーム', '音楽', 'ライブ'].map((cat) => (
+                        <option key={cat} value={cat}>
+                            {cat}
+                        </option>
+                    ))}
+                </select>
+                {errors.category && (
+                    <p className="text-sm text-red-600">{errors.category.message}</p>
+                )}
+            </div>
+            
             {/* 説明文入力 */}
             <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700">

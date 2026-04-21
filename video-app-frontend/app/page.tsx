@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation'; // 💡 useRouter を追加
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import axios from '@/lib/axios';
@@ -8,17 +8,24 @@ import Link from 'next/link';
 
 export default function Home() {
   const [videos, setVideos] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null); // 💡 user ステートを追加
+  const [user, setUser] = useState<any>(null);
+
   const searchParams = useSearchParams();
+  const router = useRouter(); // 💡 追加
+
+  // URLから現在の状態を取得
   const search = searchParams.get('search') || '';
+  const currentCategory = searchParams.get('category') || 'すべて';
 
   // 動画取得ロジック
-  const fetchVideos = async (keyword = '') => {
+  const fetchVideos = async (keyword = '', category = '') => {
     try {
-      const url = keyword
-        ? `/api/videos?keyword=${encodeURIComponent(keyword)}`
-        : '/api/videos';
-      const res = await axios.get(url);
+      let url = '/api/videos?';
+      const params = new URLSearchParams();
+      if (keyword) params.append('keyword', keyword);
+      if (category && category !== 'すべて') params.append('category', category);
+
+      const res = await axios.get(url + params.toString());
       setVideos(res.data);
     } catch (err) {
       console.error("動画の取得に失敗:", err);
@@ -37,43 +44,63 @@ export default function Home() {
 
   // 削除ロジック
   const handleDelete = async (id: number) => {
-    if (!confirm('この動画とサムネイルをサーバーから完全に削除しますか？\nこの操作は取り消せません。')) return;
+    if (!confirm('この動画を完全に削除しますか？')) return;
 
     await toast.promise(
       axios.delete(`/api/videos/${id}`).then((res) => {
-        // 💡 削除後、現在の検索ワード(search)を維持して再取得
-        fetchVideos(search);
+        fetchVideos(search, currentCategory); // 現在の条件で再読み込み
         return res;
       }),
       {
-        loading: 'サーバーからファイルを削除中...',
-        success: '動画データを完全に消去しました',
-        error: '削除に失敗しました。',
+        loading: '削除中...',
+        success: '削除しました',
+        error: '削除に失敗しました',
       }
     );
   };
 
-  // 💡 URLの検索ワード（search）が変わるたびに実行
-  useEffect(() => {
-    fetchVideos(search);
-  }, [search]);
+  // カテゴリをクリックした時の処理
+  const handleCategoryClick = (category: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (category === 'すべて') {
+      params.delete('category');
+    } else {
+      params.set('category', category);
+    }
+    router.push(`/?${params.toString()}`);
+  };
 
-  // 初回レンダリング時にユーザー情報を取得
+  // URLパラメータ（検索・カテゴリ）が変わるたびに実行
+  useEffect(() => {
+    fetchVideos(search, currentCategory);
+  }, [search, currentCategory]);
+
+  // 初回のみユーザー情報を取得
   useEffect(() => {
     fetchUser();
   }, []);
 
+  // 💡 正しい return (1回だけ)
   return (
     <div className="max-w-[1800px] mx-auto">
-      {/* カテゴリチップス */}
+
+      {/* --- カテゴリチップスセクション --- */}
       <div className="flex gap-3 mb-6 overflow-x-auto pb-2 no-scrollbar">
         {['すべて', 'プログラミング', 'ゲーム', '音楽', 'ライブ'].map((cat) => (
-          <button key={cat} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium whitespace-nowrap">
+          <button
+            key={cat}
+            onClick={() => handleCategoryClick(cat)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${currentCategory === cat
+                ? 'bg-black text-white' // 選択中
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+              }`}
+          >
             {cat}
           </button>
         ))}
       </div>
 
+      {/* --- 動画一覧セクション --- */}
       <section>
         {videos.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-x-4 gap-y-10">
@@ -95,7 +122,7 @@ export default function Home() {
                     <div className="w-full h-full flex items-center justify-center bg-gray-100 text-2xl">▶️</div>
                   )}
 
-                  {/* 削除ボタン：userが存在し、かつ自分の動画である場合のみ */}
+                  {/* 削除ボタン */}
                   {user && video.user_id === user.id && (
                     <button
                       onClick={(e) => {
