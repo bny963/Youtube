@@ -9,13 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('comments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('video_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->text('content'); // コメント内容
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // 誰が
+            $table->foreignId('video_id')->constrained()->onDelete('cascade'); // どの動画に
+            $table->text('content'); // 何と言ったか
             $table->timestamps();
         });
     }

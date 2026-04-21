@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use FFMpeg\FFMpeg;
 use FFMpeg\Coordinate\TimeCode;
 use App\Models\User;
+use App\Models\Comment;
 
 class VideoController extends Controller
 {
@@ -110,8 +111,8 @@ class VideoController extends Controller
 
     public function show($id)
     {
-        // 1. 動画を探し、投稿者(user)の情報も一緒に読み込む
-        $video = Video::with('user')->findOrFail($id);
+        // 1. 動画、投稿者、そしてコメントとその投稿者まで一気に取得（Eager Load）
+        $video = Video::with(['user', 'comments.user'])->findOrFail($id);
 
         try {
             // 2. 視聴回数をインクリメント
@@ -120,7 +121,7 @@ class VideoController extends Controller
             \Log::error("視聴回数の更新に失敗: " . $e->getMessage());
         }
 
-        // 3. 関連動画を取得（同じ投稿者の他の動画、最大10件、自分自身は除く）
+        // 3. 関連動画を取得
         $relatedVideos = Video::where('user_id', $video->user_id)
             ->where('id', '!=', $video->id)
             ->with('user')
@@ -128,10 +129,11 @@ class VideoController extends Controller
             ->limit(10)
             ->get();
 
-        // 4. まとめて返却
+        // 4. まとめて返却（💡 カンマを追加して修正）
         return response()->json([
             'video' => $video,
-            'relatedVideos' => $relatedVideos
+            'relatedVideos' => $relatedVideos, // ←ここにカンマが必要
+            'comments' => $video->comments()->with('user')->latest()->get()
         ]);
     }
 

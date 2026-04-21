@@ -2,7 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\VideoController; // 💡 末尾にセミコロンが必要
+use App\Http\Controllers\VideoController; 
+use App\Http\Controllers\CommentController;
 
 Route::get('videos', [VideoController::class, 'index']);
 Route::get('videos/{video}', [VideoController::class, 'show']);
@@ -16,4 +17,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('videos', [VideoController::class, 'store']);
     Route::delete('videos/{video}', [VideoController::class, 'destroy']);
     Route::get('/user/videos', [VideoController::class, 'userVideos']);
+    Route::post('/videos/{video}/comments', [CommentController::class, 'store']);
 });
