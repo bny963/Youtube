@@ -1,4 +1,15 @@
 services:
+    phpmyadmin:
+        image: 'phpmyadmin:latest'
+        ports:
+            - '8080:80'
+        networks:
+            - sail
+        environment:
+            - PMA_ARBITRARY=1
+            - PMA_HOST=mysql
+            - PMA_USER=sail
+            - PMA_PASSWORD=password
     laravel.test:
         build:
             context: './vendor/laravel/sail/runtimes/8.5'

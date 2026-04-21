@@ -20,7 +20,8 @@ class Video extends Model
         'user_id',
         'title',
         'description',
-        'storage_path',
+        'category',      // 💡 追加
+        'storage_path',   // 💡 追加
         'thumbnail_path',
     ];
 
