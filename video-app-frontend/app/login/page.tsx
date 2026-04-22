@@ -4,6 +4,7 @@ import { useState } from 'react';
 import axios from '@/lib/axios'; // 💡 さっき作った設定を読み込む
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -69,6 +70,17 @@ export default function LoginPage() {
                 >
                     ログイン
                 </button>
+                <div className="text-center pt-4">
+                    <p className="text-sm text-gray-600">
+                        アカウントをお持ちでないですか？{' '}
+                        <Link
+                            href="/register"
+                            className="text-blue-600 font-bold hover:underline transition-all"
+                        >
+                            新規登録
+                        </Link>
+                    </p>
+                </div>
             </form>
         </div>
     );

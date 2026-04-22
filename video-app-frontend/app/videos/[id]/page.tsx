@@ -11,14 +11,34 @@ export default function VideoDetailPage() {
     const [data, setData] = useState<{ video: any; relatedVideos: any[]; comments: any[] } | null>(null);
     const [commentContent, setCommentContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLiked, setIsLiked] = useState(false);
+    const [likesCount, setLikesCount] = useState(0);
 
     // データ取得（動画、関連動画、コメント）
     const fetchVideoDetail = async () => {
         try {
             const res = await axios.get(`/api/videos/${id}`);
             setData(res.data);
+
+            // 💡 レスポンスの形式に合わせてセット (API側のキー名を確認してください)
+            setIsLiked(res.data.is_liked); // 自分がいいね済みか
+            setLikesCount(res.data.video.likes_count || 0); // 総いいね数
         } catch (err) {
             console.error("データの取得に失敗:", err);
+        }
+    };
+    const handleLike = async () => {
+        try {
+            const res = await axios.post(`/api/videos/${id}/like`);
+
+            // サーバーから返ってきた 'liked' (true/false) を元にステートを更新
+            setIsLiked(res.data.liked);
+            setLikesCount(prev => res.data.liked ? prev + 1 : prev - 1);
+
+            // toast を使っている場合はここで通知（import を忘れずに！）
+            // toast.success(res.data.liked ? '高評価しました' : '高評価を解除しました');
+        } catch (err) {
+            alert('ログインが必要です');
         }
     };
 
@@ -66,7 +86,17 @@ export default function VideoDetailPage() {
                 <div className="mt-5">
                     <h1 className="text-2xl font-bold">{video.title}</h1>
                     {/* ...投稿者情報など（省略）... */}
-
+                    <button
+                        onClick={handleLike}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all ${isLiked
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                    >
+                        <span className="text-xl">👍</span>
+                        <span>{likesCount}</span>
+                        <span className="ml-1">{isLiked ? '高評価済み' : '高評価'}</span>
+                    </button>
                     {/* --- コメントセクション --- */}
                     <div className="mt-8 border-t pt-6">
                         <h3 className="text-xl font-bold mb-6">{comments.length} 件のコメント</h3>

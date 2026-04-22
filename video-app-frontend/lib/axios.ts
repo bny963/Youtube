@@ -1,12 +1,22 @@
 import Axios from 'axios';
 
 const axios = Axios.create({
-    baseURL: 'http://localhost', // あなたの環境のURL
+    baseURL: 'http://localhost', // LaravelのURL
     headers: {
         'X-Requested-With': 'XMLHttpRequest',
     },
     withCredentials: true,
-    withXSRFToken: true, // 👈 これが CSRF 対策に必須
+    withXSRFToken: true,
+});
+
+// リクエスト送信時にトークンがあれば載せる
+axios.interceptors.request.use(config => {
+    const token = localStorage.getItem('AUTH_TOKEN');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
 });
 
 export default axios;
