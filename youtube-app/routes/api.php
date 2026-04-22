@@ -13,6 +13,7 @@ Route::get('videos', [VideoController::class, 'index']);
 Route::get('videos/{video}', [VideoController::class, 'show']);
 Route::apiResource('videos', VideoController::class);
 Route::get('/users/{user}', [VideoController::class, 'userProfile']);
+Route::middleware('auth:sanctum')->post('/user/update', [UserController::class, 'update']);
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
