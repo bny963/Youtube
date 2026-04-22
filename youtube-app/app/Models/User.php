@@ -11,8 +11,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Video;
+use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'profile_image_path'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -40,5 +41,12 @@ class User extends Authenticatable
     public function likedVideos()
     {
         return $this->belongsToMany(Video::class, 'likes');
+    }
+    public function getProfileImageUrlAttribute()
+    {
+        // 画像が設定されていればそのURLを、なければデフォルトの画像を返す
+        return $this->profile_image_path
+            ? asset('storage/' . $this->profile_image_path)
+            : 'https://ui-avatars.com/api/?name=' . urlencode($this->name); // 名前からアイコンを生成する無料サービス
     }
 }

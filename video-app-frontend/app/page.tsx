@@ -14,6 +14,7 @@ interface VideoCardProps {
 }
 
 function VideoCard({ video, user, onDelete }: VideoCardProps) {
+  const router = useRouter();
   // ガード句: データがない場合はスケルトンを表示
   if (!video || !video.id) {
     return <div className="aspect-video w-full bg-gray-200 animate-pulse rounded-xl" />;
@@ -80,25 +81,34 @@ function VideoCard({ video, user, onDelete }: VideoCardProps) {
         )}
       </div>
 
-      <div className="flex gap-3 px-1">
+      <div className="mt-3 flex gap-3">
+        {/* ユーザーアイコン（もしあれば） */}
         <div className="flex-shrink-0">
-          <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm">
-            {video.user?.name ? video.user.name.charAt(0) : 'U'}
+          <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden">
+            {/* ユーザーアイコンの処理 */}
           </div>
         </div>
-        <div className="flex flex-col pr-2 overflow-hidden">
-          <h3 className="font-semibold text-[16px] line-clamp-2 text-gray-900 leading-snug mb-1 group-hover:text-blue-700">
+
+        <div className="flex flex-col flex-1 min-w-0">
+          {/* 💡 ここ！タイトルが表示される場所です */}
+          <h3 className="text-[16px] font-bold text-gray-900 leading-snug line-clamp-2 mb-1">
             {video.title}
           </h3>
+
+          {/* ユーザー名と視聴回数のセクション */}
           <div className="text-[14px] text-gray-600 flex flex-col">
-            <Link
-              href={`/users/${video.user_id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="hover:text-blue-600 font-medium transition-colors"
+            <span
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push(`/users/${video.user_id}`);
+              }}
+              className="hover:text-blue-600 font-medium transition-colors cursor-pointer"
             >
               {video.user?.name || '匿名ユーザー'}
-            </Link>
-            <p>
+            </span>
+
+            <p className="text-xs text-gray-500">
               {(video.views ?? 0).toLocaleString()}回視聴 • {new Date(video.created_at).toLocaleDateString()}
             </p>
           </div>

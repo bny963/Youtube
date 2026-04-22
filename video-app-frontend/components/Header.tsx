@@ -58,35 +58,59 @@ export default function Header({ onMenuClick, user, onLogout }: HeaderProps) {
                     </button>
                 </div>
             </form>
-
             {/* --- 右側セクション：各種機能ボタン --- */}
             <div className="flex items-center gap-2 sm:gap-4 min-w-[200px] justify-end">
                 {user ? (
                     <>
+                        {/* 動画投稿ボタン */}
                         <Link
                             href="/videos/upload"
-                            className="p-2 hover:bg-gray-100 rounded-full transition-colors group relative"
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
                             title="作成"
                         >
                             <VideoCameraIcon className="w-7 h-7 text-gray-700" />
                         </Link>
 
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-purple-600 rounded-full text-white flex items-center justify-center text-xs font-bold shrink-0">
-                                {user.name?.charAt(0) || 'U'}
-                            </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                            {/* プロフィール編集リンク */}
+                            <Link
+                                href="/profile/edit"
+                                className="block flex-shrink-0"
+                                title="プロフィールを編集"
+                            >
+                                {/* 💡 flex-shrink-0 を追加し、styleでもサイズを固定 */}
+                                <div
+                                    className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 hover:ring-2 hover:ring-gray-300 transition-all bg-gray-100 flex-shrink-0"
+                                    style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px' }}
+                                >
+                                    {user.profile_image_path ? (
+                                        <img
+                                            src={`http://localhost/storage/${user.profile_image_path}`}
+                                            alt={user.name}
+                                            className="w-full h-full object-cover"
+                                            style={{ display: 'block' }} // 余計な隙間を排除
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-purple-600 text-white flex items-center justify-center text-sm font-bold">
+                                            {user.name?.charAt(0) || 'U'}
+                                        </div>
+                                    )}
+                                </div>
+                            </Link>
+
                             <button
                                 onClick={onLogout}
-                                className="text-xs text-gray-500 hover:text-red-600 font-medium"
+                                className="text-xs text-gray-500 hover:text-red-600 font-medium flex-shrink-0"
                             >
                                 ログアウト
                             </button>
                         </div>
                     </>
                 ) : (
+                    /* ログインしていない時 ... */
                     <Link
                         href="/login"
-                        className="flex items-center gap-2 px-3 py-1.5 border border-blue-600 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 border border-blue-600 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors flex-shrink-0"
                     >
                         <div className="w-6 h-6 border border-blue-600 rounded-full flex items-center justify-center text-xs">👤</div>
                         ログイン
