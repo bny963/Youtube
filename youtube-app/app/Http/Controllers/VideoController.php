@@ -112,8 +112,8 @@ class VideoController extends Controller
     public function show($id)
     {
         // 1. 動画、投稿者、そしてコメントとその投稿者まで一気に取得（Eager Load）
-        $video = Video::with(['user', 'comments.user'])->findOrFail($id);
-
+        $video = Video::with(['user'])->withCount('likes')->findOrFail($id);
+        $user = Auth::user();
         try {
             // 2. 視聴回数をインクリメント
             $video->increment('views');
@@ -138,9 +138,12 @@ class VideoController extends Controller
         // 4. まとめて返却（💡 カンマを追加して修正）
         return response()->json([
             'video' => $video,
-            'is_liked' => $isLikedByMe,
-            'relatedVideos' => $relatedVideos, // ←ここにカンマが必要
-            'comments' => $video->comments()->with('user')->latest()->get()
+            'relatedVideos' => Video::where('id', '!=', $id)->limit(10)->get(),
+            'current_user' => auth()->user(),
+            'comments' => $video->comments()->with('user')->latest()->get(),
+            'is_liked' => $user ? $video->isLikedBy($user) : false,
+            // 💡 ここを追加：閲覧者がこの投稿者を登録しているか
+            'is_subscribed' => $user ? $user->subscriptions()->where('channel_id', $video->user_id)->exists() : false,
         ]);
     }
 

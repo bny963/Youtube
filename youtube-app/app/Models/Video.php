@@ -51,4 +51,12 @@ class Video extends Model
     {
         return $this->hasMany(Like::class);
     }
+    public function isLikedBy($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        return $this->likes()->where('user_id', $user->id)->exists();
+    }
 }

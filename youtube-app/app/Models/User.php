@@ -49,4 +49,14 @@ class User extends Authenticatable
             ? asset('storage/' . $this->profile_image_path)
             : 'https://ui-avatars.com/api/?name=' . urlencode($this->name); // 名前からアイコンを生成する無料サービス
     }
+    public function subscriptions()
+    {
+        return $this->belongsToMany(User::class, 'subscriptions', 'subscriber_id', 'channel_id');
+    }
+
+    // 自分のチャンネルを登録してくれている人（フォロワー）
+    public function subscribers()
+    {
+        return $this->belongsToMany(User::class, 'subscriptions', 'channel_id', 'subscriber_id');
+    }
 }
