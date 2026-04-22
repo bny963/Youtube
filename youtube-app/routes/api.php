@@ -6,6 +6,7 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\LikeController;
+use App\Http\Controllers\UserController;
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::get('videos', [VideoController::class, 'index']);
@@ -22,4 +23,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user/videos', [VideoController::class, 'userVideos']);
     Route::post('/videos/{video}/comments', [CommentController::class, 'store']);
     Route::post('/videos/{video}/like', [LikeController::class, 'toggle']);
+    Route::get('/user/liked-videos', [UserController::class, 'likedVideos']);
 });
