@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VideoController; 
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\LikeController;
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::get('videos', [VideoController::class, 'index']);
@@ -20,4 +21,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('videos/{video}', [VideoController::class, 'destroy']);
     Route::get('/user/videos', [VideoController::class, 'userVideos']);
     Route::post('/videos/{video}/comments', [CommentController::class, 'store']);
+    Route::post('/videos/{video}/like', [LikeController::class, 'toggle']);
 });

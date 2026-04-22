@@ -120,6 +120,12 @@ class VideoController extends Controller
         } catch (\Exception $e) {
             \Log::error("視聴回数の更新に失敗: " . $e->getMessage());
         }
+        $video->loadCount('likes'); // likes_count が自動で入る
+
+        // ログイン中のユーザーがいいねしているか判定
+        $isLikedByMe = Auth::check()
+            ? $video->likes()->where('user_id', Auth::id())->exists()
+            : false;
 
         // 3. 関連動画を取得
         $relatedVideos = Video::where('user_id', $video->user_id)
@@ -132,6 +138,7 @@ class VideoController extends Controller
         // 4. まとめて返却（💡 カンマを追加して修正）
         return response()->json([
             'video' => $video,
+            'is_liked' => $isLikedByMe,
             'relatedVideos' => $relatedVideos, // ←ここにカンマが必要
             'comments' => $video->comments()->with('user')->latest()->get()
         ]);
