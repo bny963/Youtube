@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 💡 すべての背景を強制的に白（ダーク時は黒）にする */
+:root {
+    --background: #ffffff !important;
+}
+
+[class~="dark"] {
+    --background: #0f0f0f !important;
+}
+
+body,
+main,
+section,
+div[bis_skin_checked] {
+    background-color: var(--background) !important;
+}

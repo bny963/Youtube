@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import axios from '@/lib/axios';
+import { ThemeProvider } from 'next-themes';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,8 +26,8 @@ export default function RootLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [mounted, setMounted] = useState(false); // 💡 追加：マウント状態を管理
 
-  // ユーザー情報を取得
   const fetchUser = async () => {
     try {
       const res = await axios.get('/api/user');
@@ -36,7 +37,6 @@ export default function RootLayout({
     }
   };
 
-  // ログアウト処理
   const handleLogout = async () => {
     try {
       await axios.post('/logout');
@@ -49,38 +49,35 @@ export default function RootLayout({
 
   useEffect(() => {
     fetchUser();
+    setMounted(true); // 💡 追加：ブラウザに読み込まれたら true にする
   }, []);
 
   return (
-    <html lang="ja">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`} suppressHydrationWarning={true}>
-        <Toaster position="top-center" />
+    <html lang="ja" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <Toaster position="top-center" />
 
-        {/* 💡 全体を flex-col (縦並び) にします。
-          これでヘッダーが「物理的に」ページの上部を占有し、下を押し下げます。
-        */}
-        <div className="flex flex-col h-screen overflow-hidden">
+          {/* 💡 mounted が true になるまで背景色だけの空の div を出すことでエラーを防ぐ */}
+          {!mounted ? (
+            <div className="bg-white min-h-screen" />
+          ) : (
+            <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-[#0f0f0f] text-black dark:text-white transition-colors duration-300">
+              <Header
+                onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                user={user}
+                onLogout={handleLogout}
+              />
 
-          {/* 1. 共通ヘッダー：fixedを外したことで、これがページを押し下げます */}
-          <Header
-            onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            user={user}
-            onLogout={handleLogout}
-          />
-
-          {/* 2. 下部セクション：サイドバーとメインコンテンツを横に並べる */}
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-
-            {/* サイドバー：これがメインを右に押し出す */}
-            <Sidebar isOpen={isSidebarOpen} />
-
-            {/* メインコンテンツ：ここだけが独立してスクロールする */}
-            <main className="flex-1 overflow-y-auto p-6 transition-all duration-300">
-              {children}
-            </main>
-
-          </div>
-        </div>
+              <div className="flex flex-1 min-h-0 overflow-hidden bg-white dark:bg-[#0f0f0f]">
+                <Sidebar isOpen={isSidebarOpen} />
+                  <main className="flex-1 overflow-y-auto p-6 bg-white dark:bg-[#0f0f0f] text-black dark:text-white">
+                    {children}
+                  </main>
+              </div>
+            </div>
+          )}
+        </ThemeProvider>
       </body>
     </html>
   );

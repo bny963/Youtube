@@ -6,111 +6,49 @@ import toast from 'react-hot-toast';
 import axios from '@/lib/axios';
 import Link from 'next/link';
 
-// --- 1. VideoCard コンポーネント (子) ---
-interface VideoCardProps {
-  video: any;
-  user: any;
-  onDelete: (id: number) => void;
-}
-
-function VideoCard({ video, user, onDelete }: VideoCardProps) {
+// --- 1. VideoCard コンポーネント ---
+function VideoCard({ video, user, onDelete }: { video: any, user: any, onDelete: (id: number) => void }) {
   const router = useRouter();
-  // ガード句: データがない場合はスケルトンを表示
-  if (!video || !video.id) {
-    return <div className="aspect-video w-full bg-gray-200 animate-pulse rounded-xl" />;
-  }
-
   const [isHovering, setIsHovering] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleMouseEnter = () => {
-    timerRef.current = setTimeout(() => {
-      setIsHovering(true);
-    }, 500);
-  };
-
-  const handleMouseLeave = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setIsHovering(false);
-  };
+  if (!video || !video.id) {
+    return <div className="aspect-video w-full bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-xl" />;
+  }
 
   return (
     <Link
       href={`/videos/${video.id}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="group flex flex-col w-full max-w-[360px] mx-auto sm:mx-0 transition-all"
+      onMouseEnter={() => { timerRef.current = setTimeout(() => setIsHovering(true), 500); }}
+      onMouseLeave={() => { if (timerRef.current) clearTimeout(timerRef.current); setIsHovering(false); }}
+      className="group flex flex-col w-full max-w-[360px] mx-auto sm:mx-0 bg-transparent"
     >
-      <div className="relative aspect-video w-full bg-slate-100 rounded-xl overflow-hidden mb-3">
-        {isHovering && video.storage_path ? (
-          <video
-            src={`http://localhost/storage/${video.storage_path}`}
-            className="w-full h-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-          />
-        ) : (
-          <>
-            {video.thumbnail_path ? (
-              <img
-                src={`http://localhost/storage/${video.thumbnail_path}`}
-                alt={video.title}
-                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-2xl">▶️</div>
-            )}
-          </>
-        )}
-
-        {user && video.user_id === user.id && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete(video.id);
-            }}
-            className="absolute top-2 right-2 z-10 p-1.5 bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        )}
+      {/* 💡 修正点：bg-slate-100 を捨てて bg-transparent に。これで layout の白が透けます */}
+      <div className="relative aspect-video w-full bg-transparent dark:bg-zinc-800 rounded-xl overflow-hidden mb-3">
+        <div className="w-full h-full border border-gray-100 dark:border-none rounded-xl overflow-hidden">
+          {isHovering && video.storage_path ? (
+            <video src={`http://localhost/storage/${video.storage_path}`} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+          ) : (
+            <div className="w-full h-full bg-white dark:bg-zinc-800">
+              {video.thumbnail_path ? (
+                <img src={`http://localhost/storage/${video.thumbnail_path}`} alt={video.title} className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-2xl">▶️</div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="mt-3 flex gap-3">
-        {/* ユーザーアイコン（もしあれば） */}
+      <div className="mt-3 flex gap-3 bg-transparent">
         <div className="flex-shrink-0">
-          <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden">
-            {/* ユーザーアイコンの処理 */}
-          </div>
+          <div className="w-9 h-9 rounded-full bg-gray-50 dark:bg-zinc-700 overflow-hidden" />
         </div>
-
         <div className="flex flex-col flex-1 min-w-0">
-          {/* 💡 ここ！タイトルが表示される場所です */}
-          <h3 className="text-[16px] font-bold text-gray-900 leading-snug line-clamp-2 mb-1">
-            {video.title}
-          </h3>
-
-          {/* ユーザー名と視聴回数のセクション */}
-          <div className="text-[14px] text-gray-600 flex flex-col">
-            <span
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                router.push(`/users/${video.user_id}`);
-              }}
-              className="hover:text-blue-600 font-medium transition-colors cursor-pointer"
-            >
-              {video.user?.name || '匿名ユーザー'}
-            </span>
-
-            <p className="text-xs text-gray-500">
-              {(video.views ?? 0).toLocaleString()}回視聴 • {new Date(video.created_at).toLocaleDateString()}
-            </p>
+          <h3 className="text-[16px] font-bold text-black dark:text-zinc-100 leading-snug line-clamp-2 mb-1">{video.title}</h3>
+          <div className="text-[14px] text-gray-600 dark:text-zinc-400 flex flex-col">
+            <span className="hover:text-blue-600 font-medium cursor-pointer">{video.user?.name || '匿名ユーザー'}</span>
+            <p className="text-xs text-gray-500">{(video.views ?? 0).toLocaleString()}回視聴 • {new Date(video.created_at).toLocaleDateString()}</p>
           </div>
         </div>
       </div>
@@ -118,84 +56,43 @@ function VideoCard({ video, user, onDelete }: VideoCardProps) {
   );
 }
 
-// --- 2. Home コンポーネント (親) ---
 export default function Home() {
   const [videos, setVideos] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
-
+  const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  const search = searchParams.get('search') || '';
   const currentCategory = searchParams.get('category') || 'すべて';
 
-  const fetchVideos = async (keyword = '', category = '') => {
-    try {
-      let url = '/api/videos?';
-      const params = new URLSearchParams();
-      if (keyword) params.append('keyword', keyword);
-      if (category && category !== 'すべて') params.append('category', category);
-
-      const res = await axios.get(url + params.toString());
-      setVideos(res.data);
-    } catch (err) {
-      console.error("動画の取得に失敗:", err);
-    }
-  };
-
-  const fetchUser = async () => {
-    try {
-      const res = await axios.get('/api/user');
-      setUser(res.data);
-    } catch (err) {
-      setUser(null);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('この動画を完全に削除しますか？')) return;
-    await toast.promise(
-      axios.delete(`/api/videos/${id}`).then((res) => {
-        fetchVideos(search, currentCategory);
-        return res;
-      }),
-      {
-        loading: '削除中...',
-        success: '削除しました',
-        error: '削除に失敗しました',
-      }
-    );
-  };
-
-  const handleCategoryClick = (category: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (category === 'すべて') {
-      params.delete('category');
-    } else {
-      params.set('category', category);
-    }
-    router.push(`/?${params.toString()}`);
-  };
-
   useEffect(() => {
-    fetchVideos(search, currentCategory);
-  }, [search, currentCategory]);
-
-  useEffect(() => {
-    fetchUser();
+    setMounted(true);
+    axios.get('/api/user').then(res => setUser(res.data)).catch(() => setUser(null));
   }, []);
 
+  useEffect(() => {
+    if (!mounted) return;
+    const keyword = searchParams.get('search') || '';
+    const params = new URLSearchParams();
+    if (keyword) params.append('keyword', keyword);
+    if (currentCategory !== 'すべて') params.append('category', currentCategory);
+    axios.get('/api/videos?' + params.toString()).then(res => setVideos(res.data));
+  }, [searchParams, currentCategory, mounted]);
+
+  if (!mounted) return null;
+
   return (
-    <div className="max-w-[1800px] mx-auto p-4">
-      {/* カテゴリチップス */}
-      <div className="flex gap-3 mb-6 overflow-x-auto pb-2 no-scrollbar">
+    <div className="max-w-[1800px] mx-auto p-4 bg-transparent">
+      {/* 💡 修正点：カテゴリボタンのグレー背景も bg-white か bg-transparent に */}
+      <div className="flex gap-3 mb-6 overflow-x-auto pb-2 no-scrollbar bg-transparent">
         {['すべて', 'プログラミング', 'ゲーム', '音楽', 'ライブ'].map((cat) => (
           <button
             key={cat}
-            onClick={() => handleCategoryClick(cat)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${currentCategory === cat
-                ? 'bg-black text-white'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              if (cat === 'すべて') params.delete('category'); else params.set('category', cat);
+              router.push(`/?${params.toString()}`);
+            }}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${currentCategory === cat ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-white border border-gray-200 dark:bg-zinc-800 dark:border-none text-gray-900 dark:text-zinc-100 hover:bg-gray-50'
               }`}
           >
             {cat}
@@ -203,23 +100,16 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 動画一覧 */}
-      <section>
+      {/* 💡 修正点：セクションも透明に */}
+      <section className="bg-transparent text-black dark:text-white">
         {videos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-x-4 gap-y-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-10 bg-transparent">
             {videos.map((video) => (
-              <VideoCard
-                key={video.id}
-                video={video}
-                user={user}
-                onDelete={handleDelete}
-              />
+              <VideoCard key={video.id} video={video} user={user} onDelete={() => { }} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 text-gray-400">
-            該当する動画が見つかりませんでした
-          </div>
+          <div className="text-center py-20 text-gray-400">動画が見つかりませんでした</div>
         )}
       </section>
     </div>
