@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle'
 // 💡 HandThumbUpIcon を追加
 import {
     HomeIcon,
@@ -8,10 +9,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function Sidebar({ isOpen }: { isOpen: boolean }) {
-    // 💡 マイページへのリンクを追加
     const menuItems = [
         { name: 'ホーム', href: '/', icon: HomeIcon },
-        { name: '高評価した動画', href: '/mypage', icon: HandThumbUpIcon }, // 👈 追加
+        { name: '高評価した動画', href: '/mypage', icon: HandThumbUpIcon },
         { name: '動画の管理', href: '/manage', icon: VideoCameraIcon },
         { name: '動画を投稿', href: '/videos/upload', icon: ArrowUpTrayIcon },
     ];
@@ -19,7 +19,8 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
     return (
         <aside
             className={`
-                bg-white border-r overflow-y-auto transition-all duration-300 ease-in-out
+                /* 背景と境界線にダークモード用の色を追加 */
+                bg-white dark:bg-[#0f0f0f] border-r dark:border-zinc-800 overflow-y-auto transition-all duration-300 ease-in-out
                 ${isOpen ? 'w-64 opacity-100' : 'w-0 opacity-0 border-none'}
             `}
         >
@@ -29,13 +30,22 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
                         <Link
                             key={item.name}
                             href={item.href}
-                            className="flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium"
+                            /* テキスト色とホバー時の色を調整 */
+                            className="flex items-center gap-4 px-4 py-3 text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors font-medium"
                         >
                             <item.icon className="w-6 h-6" />
                             <span>{item.name}</span>
                         </Link>
                     ))}
                 </nav>
+
+                {/* テーマ切り替えボタンのレイアウト調整 */}
+                <div className="mt-4 pt-4 border-t dark:border-zinc-800 px-4">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-500 dark:text-zinc-400">外観</span>
+                        <ThemeToggle />
+                    </div>
+                </div>
             </div>
         </aside>
     );
