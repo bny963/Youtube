@@ -37,5 +37,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Video::class);
     }
-
+    public function likedVideos()
+    {
+        return $this->belongsToMany(Video::class, 'likes');
+    }
 }
