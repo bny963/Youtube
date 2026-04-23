@@ -7,6 +7,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use App\Models\User;
+use App\Models\Video;
 
 class VideoUploadTest extends TestCase
 {
@@ -54,5 +55,30 @@ class VideoUploadTest extends TestCase
         ]);
 
         $response->assertStatus(422);
+    }
+    /** @test */
+    public function 動画レコードを削除すると物理ファイルも削除される()
+    {
+        // 1. 準備：フェイクストレージとユーザー、動画データを作成
+        Storage::fake('public');
+        $user = User::factory()->create();
+        $file = UploadedFile::fake()->create('to_be_deleted.mp4', 1000);
+
+        // ファイルを保存した状態を作る
+        $path = $file->store('videos', 'public');
+        $video = Video::factory()->create([
+            'user_id' => $user->id,
+            'file_path' => $path,
+        ]);
+
+        // 2. 実行：削除APIを叩く
+        $response = $this->actingAs($user)->deleteJson("/api/videos/{$video->id}");
+
+        // 3. 検証
+        $response->assertStatus(204); // または 200
+        $this->assertDatabaseMissing('videos', ['id' => $video->id]);
+
+        // 【重要】物理ファイルが消えているかチェック
+        Storage::disk('public')->assertMissing($path);
     }
 }
