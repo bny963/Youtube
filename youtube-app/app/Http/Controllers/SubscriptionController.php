@@ -12,19 +12,18 @@ class SubscriptionController extends Controller
     {
         $me = Auth::user();
 
-        // 自分自身は登録できないようにする
         if ($me->id === $user->id) {
             return response()->json(['message' => '自分自身は登録できません'], 400);
         }
 
-        // 既に登録しているか確認し、あれば削除(detach)、なければ追加(attach)
-        // toggleメソッドを使うと1行で書けます
+        // toggleを実行
         $status = $me->subscriptions()->toggle($user->id);
-
         $isSubscribed = count($status['attached']) > 0;
 
         return response()->json([
             'is_subscribed' => $isSubscribed,
+            // 💡 最新の登録者数を返却する（ここを追加！）
+            'subscribers_count' => $user->subscribers()->count(),
             'message' => $isSubscribed ? 'チャンネル登録しました' : '登録を解除しました'
         ]);
     }
