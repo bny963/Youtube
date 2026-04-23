@@ -18,11 +18,15 @@ class VideoController extends Controller
 {
     public function userProfile(User $user)
     {
-        // ユーザー情報と、そのユーザーに紐づく動画を最新順で取得
-        // load('videos') を使うことで、一回のクエリで取得できます
+        // 💡 ユーザー情報に登録者数を追加
+        $user->loadCount('subscribers');
+
         return response()->json([
-            'user' => $user,
-            'videos' => $user->videos()->with('user')->latest()->get()
+            'user' => $user, // ← ここにチャンネル主の名前が入る
+            'videos' => $user->videos()
+                ->with('user') // 💡 これがないと動画カード内の名前が消えます
+                ->latest()
+                ->get()
         ]);
     }
 
@@ -111,11 +115,16 @@ class VideoController extends Controller
 
     public function show($id)
     {
-        // 1. 動画、投稿者、そしてコメントとその投稿者まで一気に取得（Eager Load）
-        $video = Video::with(['user'])->withCount('likes')->findOrFail($id);
+        // 1. user を取得する際に、登録者数をカウントするように修正
+        $video = Video::with([
+            'user' => function ($query) {
+                $query->withCount('subscribers'); // 💡 これで user_subscribers_count が追加されます
+            }
+        ])->withCount('likes')->findOrFail($id);
+
         $user = Auth::user();
+
         try {
-            // 2. 視聴回数をインクリメント
             $video->increment('views');
         } catch (\Exception $e) {
             \Log::error("視聴回数の更新に失敗: " . $e->getMessage());
@@ -142,7 +151,6 @@ class VideoController extends Controller
             'current_user' => auth()->user(),
             'comments' => $video->comments()->with('user')->latest()->get(),
             'is_liked' => $user ? $video->isLikedBy($user) : false,
-            // 💡 ここを追加：閲覧者がこの投稿者を登録しているか
             'is_subscribed' => $user ? $user->subscriptions()->where('channel_id', $video->user_id)->exists() : false,
         ]);
     }

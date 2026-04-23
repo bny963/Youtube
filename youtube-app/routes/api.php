@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\ChannelController;
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::get('videos', [VideoController::class, 'index']);
@@ -15,6 +16,7 @@ Route::get('videos/{video}', [VideoController::class, 'show']);
 Route::apiResource('videos', VideoController::class);
 Route::get('/users/{user}', [VideoController::class, 'userProfile']);
 Route::middleware('auth:sanctum')->post('/user/update', [UserController::class, 'update']);
+Route::get('/channels/{id}', [ChannelController::class, 'show']);
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -29,4 +31,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/subscribe/{user}', [SubscriptionController::class, 'toggle']);
     Route::patch('/videos/{id}', [VideoController::class, 'update']);
     Route::get('/sidebar/subscriptions', [SubscriptionController::class, 'sidebarIndex']);
+    Route::post('/channels/{user}/subscribe', [SubscriptionController::class, 'toggle']);
 });
