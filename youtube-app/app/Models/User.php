@@ -59,4 +59,13 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(User::class, 'subscriptions', 'channel_id', 'subscriber_id');
     }
+    public function sidebarIndex(Request $request)
+    {
+        $subscriptions = $request->user()
+            ->subscriptions()
+            ->select('users.id', 'users.name', 'users.profile_photo_path') // 必要なカラムだけ絞る
+            ->get();
+
+        return response()->json($subscriptions);
+    }
 }
