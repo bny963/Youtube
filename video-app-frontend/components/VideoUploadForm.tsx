@@ -177,53 +177,44 @@ export default function VideoUploadForm({
 
                     <label
                         htmlFor="video-input"
-                        className={`block p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${isUploading
+                        className={`block p-4 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors 
+        ${isUploading
                                 ? 'bg-gray-50 border-gray-300 cursor-not-allowed opacity-50'
                                 : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
-                            } ${fileError ? 'border-red-400 bg-red-50' : ''}`}
+                            } 
+        ${fileError ? 'border-red-400 bg-red-50' : ''}
+        /* 💡 ここを追加！ 枠そのものを最大360pxにして中央に寄せる */
+        max-w-[360px] mx-auto`}
                     >
                         {previewUrl ? (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
+                                {/* 💡 動画タグ自体も max-w-full で枠に収まるようにします */}
                                 <video
                                     src={previewUrl}
-                                    className="w-full max-h-40 rounded"
+                                    className="w-full aspect-video rounded-lg shadow-sm bg-black"
                                     controls
                                 />
-                                <p className="text-sm text-gray-600">
-                                    {selectedFile?.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    {(selectedFile?.size || 0) / 1024 / 1024 < 1
-                                        ? `${((selectedFile?.size || 0) / 1024).toFixed(2)}KB`
-                                        : `${((selectedFile?.size || 0) / 1024 / 1024).toFixed(2)}MB`}
-                                </p>
+                                <div className="px-2">
+                                    <p className="text-xs text-gray-600 truncate">
+                                        {selectedFile?.name}
+                                    </p>
+                                    <p className="text-[10px] text-gray-400">
+                                        {((selectedFile?.size || 0) / 1024 / 1024).toFixed(2)}MB
+                                    </p>
+                                </div>
                                 {!isUploading && (
-                                    <p className="text-xs text-blue-500 hover:underline">
-                                        クリックして別の動画を選択
+                                    <p className="text-[10px] text-blue-500 font-medium">
+                                        クリックして変更
                                     </p>
                                 )}
                             </div>
                         ) : (
-                            <div className="space-y-2">
-                                <svg
-                                    className="mx-auto h-12 w-12 text-gray-400"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
+                            // 未選択時の表示（ここは w-full のままでもアイコンが中央なのでOK）
+                            <div className="space-y-2 py-4">
+                                <svg className="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                                 </svg>
-                                <p className="text-gray-600 font-medium">
-                                    動画ファイルをドラッグ＆ドロップ
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    または上記をクリックして選択
-                                </p>
+                                <p className="text-sm text-gray-600 font-medium">動画を選択</p>
                             </div>
                         )}
                     </label>
@@ -296,7 +287,7 @@ export default function VideoUploadForm({
                     <p className="text-sm text-red-600">{errors.category.message}</p>
                 )}
             </div>
-            
+
             {/* 説明文入力 */}
             <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700">
@@ -330,53 +321,27 @@ export default function VideoUploadForm({
             )}
 
             {/* 送信ボタン */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex justify-center pt-4">
                 <button
                     type="submit"
                     disabled={isUploading || !selectedFile || !!fileError}
-                    className={`flex-1 py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 ${isUploading || !selectedFile || !!fileError
+                    className={`w-full max-w-[360px] py-3 rounded-lg font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 ${isUploading || !selectedFile || !!fileError
                             ? 'bg-gray-400 cursor-not-allowed opacity-50'
-                            : 'bg-blue-500 hover:bg-blue-600 active:scale-95'
+                            : 'bg-blue-500 hover:bg-blue-600 active:scale-95 shadow-md'
                         }`}
                 >
                     {isUploading ? (
                         <>
-                            <svg
-                                className="animate-spin h-5 w-5"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                />
-                                <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                />
+                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
                             アップロード中...
                         </>
                     ) : (
                         <>
-                            <svg
-                                className="h-5 w-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-                                />
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                             </svg>
                             アップロード
                         </>
