@@ -28,4 +28,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user/liked-videos', [UserController::class, 'likedVideos']);
     Route::post('/subscribe/{user}', [SubscriptionController::class, 'toggle']);
     Route::patch('/videos/{id}', [VideoController::class, 'update']);
+    Route::get('/sidebar/subscriptions', [SubscriptionController::class, 'sidebarIndex']);
 });

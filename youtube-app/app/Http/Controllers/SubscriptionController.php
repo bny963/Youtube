@@ -28,4 +28,17 @@ class SubscriptionController extends Controller
             'message' => $isSubscribed ? 'チャンネル登録しました' : '登録を解除しました'
         ]);
     }
+    public function sidebarIndex(Request $request)
+    {
+        $subscriptions = $request->user()
+            ->subscriptions()
+            ->select(
+                'users.id',
+                'users.name',
+                'users.profile_image_path' // 💡 ここを photo から image に修正
+            )
+            ->get();
+
+        return response()->json($subscriptions);
+    }
 }
