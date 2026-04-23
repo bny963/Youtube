@@ -28,7 +28,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "app/videos/[id]/upload/UploadPage.test.tsx"
   ],
   "exclude": ["node_modules"]
 }
