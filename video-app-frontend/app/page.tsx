@@ -22,27 +22,31 @@ function VideoCard({ video, user, onDelete }: { video: any, user: any, onDelete:
       onMouseLeave={() => { if (timerRef.current) clearTimeout(timerRef.current); setIsHovering(false); }}
       className="group flex flex-col w-full bg-transparent"
     >
-      <div className="relative aspect-video w-full bg-transparent dark:bg-zinc-800 rounded-xl overflow-hidden mb-3">
-        <div className="w-full h-full border border-gray-100 dark:border-none rounded-xl overflow-hidden">
+      <div className="relative w-full overflow-hidden mb-3 rounded-xl bg-black" style={{ aspectRatio: '16 / 9' }}>
+        {/* 💡 修正のキモ：max-width を 100% にして、親のグリッド枠を絶対に超えないようにします */}
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center">
           {isHovering && video.storage_path ? (
             <video
               src={`http://localhost/storage/${video.storage_path}`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               autoPlay
               muted
               loop
               playsInline
             />
           ) : (
-            <div className="w-full h-full bg-white dark:bg-zinc-800">
+            <div className="w-full h-full flex items-center justify-center">
               {video.thumbnail_path ? (
                 <img
                   src={`http://localhost/storage/${video.thumbnail_path}`}
                   alt={video.title}
-                  className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                  /* 💡 max-w-full と max-h-full で、物理的な「はみ出し」を完全に防止します */
+                  className="max-w-full max-h-full object-contain transition-transform duration-200 group-hover:scale-105"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-2xl">▶️</div>
+                <div className="w-full h-full flex items-center justify-center text-2xl bg-gray-200 dark:bg-zinc-700">
+                  <span className="opacity-50">▶️</span>
+                </div>
               )}
             </div>
           )}
