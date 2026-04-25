@@ -67,7 +67,6 @@ class VideoController extends Controller
     public function store(StoreVideoRequest $request)
     {
         try {
-            // StoreVideoRequest が自動的にバリデーションを実行
             $validated = $request->validated();
 
             if (!auth()->check()) {
@@ -76,14 +75,21 @@ class VideoController extends Controller
 
             // 1. 動画を保存
             $videoFile = $request->file('video_file');
-            $path = $videoFile->store('videos', 'public'); // $path として定義
+            $path = $videoFile->store('videos', 'public');
 
-            // 2. サムネイルを生成
+            // 2. サムネイルの処理
             $thumbnailPath = null;
-            try {
-                $thumbnailPath = $this->generateThumbnail($path); // ここも $path を渡す
-            } catch (\Exception $e) {
-                \Log::warning('Thumbnail generation failed: ' . $e->getMessage());
+
+            if ($request->hasFile('thumbnail')) {
+                // ユーザーが画像をアップロードした場合
+                $thumbnailPath = $request->file('thumbnail')->store('thumbnails', 'public');
+            } else {
+                // 画像がない場合は自動生成を試みる（既存のロジックを活用）
+                try {
+                    $thumbnailPath = $this->generateThumbnail($path);
+                } catch (\Exception $e) {
+                    \Log::warning('Thumbnail generation failed: ' . $e->getMessage());
+                }
             }
 
             // 3. DBに保存
@@ -92,8 +98,8 @@ class VideoController extends Controller
                 'title' => $request->title,
                 'description' => $request->description,
                 'category' => $request->category,
-                'storage_path' => $path,           // ✅ $videoPath ではなく $path に修正！
-                'thumbnail_path' => $thumbnailPath,
+                'storage_path' => $path,
+                'thumbnail_path' => $thumbnailPath, // アップロード画像優先、なければ生成パス
             ]);
 
             return response()->json([
@@ -104,7 +110,6 @@ class VideoController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Video upload error: ' . $e->getMessage());
-
             return response()->json([
                 'success' => false,
                 'message' => 'アップロード中にエラーが発生しました',
