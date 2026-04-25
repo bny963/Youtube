@@ -3,7 +3,6 @@
 import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import axios from '@/lib/axios';
-// VideoCard はサイドバーでは使わず、カスタムレイアウトを適用します
 import Link from 'next/link';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
 
@@ -77,65 +76,67 @@ export default function VideoDetailPage() {
     const isMyChannel = data.current_user && data.current_user.id === video.user_id;
 
     return (
-        <div className="max-w-[1750px] mx-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-8">
-            {/* 左側：メイン（変更なし） */}
-            <div className="flex-1 min-w-0">
-                <div
-                    className="relative bg-black rounded-xl overflow-hidden mx-auto lg:mx-0 shadow-md"
-                    style={{ width: '100%', maxWidth: '1280px', aspectRatio: '16 / 9' }}
-                >
-                    <video key={video.id} src={`http://localhost/storage/${video.storage_path}`} controls autoPlay className="w-full h-full" />
+        /* 💡 親コンテナ: gap-8 を gap-[10px] に変更して距離を詰める */
+        <div className="flex flex-row justify-center gap-[10px] p-6 mx-auto bg-white dark:bg-zinc-950" style={{ minWidth: '1720px', width: 'fit-content', alignItems: 'flex-start' }}>
+
+            {/* 左側：メインコンテンツ (1280px固定) */}
+            <div style={{ width: '1280px', flexShrink: 0 }}>
+                {/* 1. 動画プレイヤー */}
+                <div className="bg-black rounded-xl overflow-hidden shadow-lg" style={{ width: '1280px', height: '720px' }}>
+                    <video
+                        key={video.id}
+                        src={`http://localhost/storage/${video.storage_path}`}
+                        controls
+                        autoPlay
+                        className="w-full h-full"
+                    />
                 </div>
 
-                <div className="mt-5 max-w-[1280px]">
-                    <h1 className="text-xl md:text-2xl font-bold break-words">{video.title}</h1>
-                    <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
+                {/* 2. 動画タイトル・投稿者情報 */}
+                <div className="mt-5">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{video.title}</h1>
+                    <div className="flex items-center justify-between mt-4">
                         <div className="flex items-center gap-3">
-                            <div style={{ width: '40px', height: '40px', flexShrink: 0 }} className="rounded-full overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                            <div style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px' }} className="rounded-full overflow-hidden bg-gray-200">
                                 <Link href={`/channels/${video.user.id}`}>
                                     {video.user.profile_image_path ? (
-                                        <img src={`http://localhost/storage/${video.user.profile_image_path}`} alt="" className="w-full h-full object-cover" />
+                                        <img src={`http://localhost/storage/${video.user.profile_image_path}`} className="w-full h-full object-cover" alt="" />
                                     ) : (
                                         <UserCircleIcon className="w-full h-full text-gray-400" />
                                     )}
                                 </Link>
                             </div>
                             <div className="flex flex-col">
-                                <Link href={`/channels/${video.user.id}`} className="font-bold text-[15px] leading-tight hover:underline">{video.user.name}</Link>
-                                <p className="text-[12px] text-gray-500">{subscriberCount.toLocaleString()} 登録者</p>
+                                <Link href={`/channels/${video.user.id}`} className="font-bold hover:underline text-sm">{video.user.name}</Link>
+                                <p className="text-xs text-gray-500">{subscriberCount.toLocaleString()} 登録者</p>
                             </div>
-                            <div className="ml-2">
+                            <div className="ml-4">
                                 {isMyChannel ? (
-                                    <Link href={`/videos/${video.id}/edit`} className="px-4 py-1.5 bg-gray-100 text-black rounded-full text-sm font-bold">動画を編集</Link>
+                                    <Link href={`/videos/${video.id}/edit`} className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 rounded-full text-sm font-bold">編集</Link>
                                 ) : (
-                                    <button onClick={handleSubscribe} className={`px-4 py-1.5 rounded-full text-sm font-bold ${isSubscribed ? 'bg-gray-100 text-black' : 'bg-black text-white'}`}>
+                                    <button onClick={handleSubscribe} className={`px-4 py-2 rounded-full text-sm font-bold ${isSubscribed ? 'bg-gray-100 text-black' : 'bg-black text-white'}`}>
                                         {isSubscribed ? '登録済み' : 'チャンネル登録'}
                                     </button>
                                 )}
                             </div>
                         </div>
-                        <button onClick={handleLike} className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold ${isLiked ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                        <button onClick={handleLike} className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-zinc-800 rounded-full font-bold">
                             <span>👍</span> {likesCount}
                         </button>
                     </div>
                 </div>
 
-                {/* コメントセクション */}
-                <div className="mt-8 border-t dark:border-zinc-800 pt-6 max-w-[1280px]">
+                {/* 3. コメントセクション */}
+                <div className="mt-8 border-t dark:border-zinc-800 pt-6">
                     <h3 className="text-lg font-bold mb-6">{comments.length} 件のコメント</h3>
                     <form onSubmit={handleCommentSubmit} className="flex gap-4 mb-8">
-                        <div
-                            className="rounded-full overflow-hidden bg-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0"
-                            style={{ width: '40px', height: '40px' }}
-                        >
+                        <div style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px' }} className="rounded-full overflow-hidden bg-blue-500 flex-shrink-0">
                             {data.current_user?.profile_image_path ? (
-                                <img
-                                    src={`http://localhost/storage/${data.current_user.profile_image_path}`}
-                                    className="w-full h-full object-cover"
-                                    alt=""
-                                />
+                                <img src={`http://localhost/storage/${data.current_user.profile_image_path}`} className="w-full h-full object-cover" alt="" />
                             ) : (
-                                <span className="text-sm">{data.current_user?.name?.charAt(0) || '?'}</span>
+                                <div className="w-full h-full flex items-center justify-center text-white text-sm font-bold">
+                                    {data.current_user?.name?.charAt(0) || '?'}
+                                </div>
                             )}
                         </div>
                         <input
@@ -145,18 +146,25 @@ export default function VideoDetailPage() {
                             value={commentContent}
                             onChange={(e) => setCommentContent(e.target.value)}
                         />
-                        <button disabled={isSubmitting} className="bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-full text-sm font-bold disabled:opacity-50">コメント</button>
+                        <button disabled={isSubmitting} className="bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-full text-sm font-bold disabled:opacity-50">投稿</button>
                     </form>
+
                     <div className="space-y-6">
                         {comments.map((c) => (
                             <div key={c.id} className="flex gap-4">
-                                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-800 flex items-center justify-center font-bold shrink-0">{c.user?.name?.charAt(0)}</div>
+                                <div style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px' }} className="rounded-full bg-gray-200 dark:bg-zinc-800 flex-shrink-0 overflow-hidden">
+                                    {c.user?.profile_image_path ? (
+                                        <img src={`http://localhost/storage/${c.user.profile_image_path}`} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center font-bold text-sm">{c.user?.name?.charAt(0)}</div>
+                                    )}
+                                </div>
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-bold">{c.user?.name}</span>
                                         <span className="text-xs text-gray-500">{new Date(c.created_at).toLocaleDateString()}</span>
                                     </div>
-                                    <p className="text-sm mt-1 break-words">{c.content}</p>
+                                    <p className="text-sm mt-1 leading-relaxed text-gray-800 dark:text-zinc-200">{c.content}</p>
                                 </div>
                             </div>
                         ))}
@@ -164,43 +172,40 @@ export default function VideoDetailPage() {
                 </div>
             </div>
 
-            {/* 💡 右側：関連動画サイドバー（リスト型レイアウト） */}
-            <div className="w-full lg:w-[350px] xl:w-[400px] shrink-0">
-                <h2 className="font-bold text-lg mb-4 px-1">関連動画</h2>
-                <div className="flex flex-col gap-4">
-                    {relatedVideos.map((item) => (
-                        <Link key={item.id} href={`/videos/${item.id}`} className="group flex gap-3">
-                            {/* 左：サムネイル（160px固定） */}
-                            <div
-                                className="relative w-[160px] flex-shrink-0 bg-black rounded-lg overflow-hidden shadow-sm"
-                                style={{ aspectRatio: '16 / 9' }}
-                            >
-                                <img
-                                    src={`http://localhost/storage/${item.thumbnail_path}`}
-                                    alt={item.title}
-                                    className="w-full h-full object-contain"
-                                />
-                            </div>
+            {/* 右側：関連動画サイドバー (400px固定) */}
+            <div style={{ width: '400px', flexShrink: 0 }} className="flex flex-col gap-2"> {/* gap-3 から 2 へ縮小 */}
+                <h2 className="font-bold text-base mb-1 text-gray-900 dark:text-white px-1">関連動画</h2>
 
-                            {/* 右：動画情報 */}
-                            <div className="flex flex-col min-w-0 py-0.5">
-                                <h3 className="text-sm font-bold line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">
-                                    {item.title}
-                                </h3>
+                {relatedVideos.map((item) => (
+                    <Link key={item.id} href={`/videos/${item.id}`} className="flex gap-2 group items-start w-full"> {/* gap-3 から 2 へ縮小 */}
+                        {/* 1. サムネイル (168px固定) */}
+                        <div style={{ width: '168px', height: '94px', minWidth: '168px' }} className="bg-black rounded-lg overflow-hidden flex-shrink-0 relative">
+                            <img
+                                src={`http://localhost/storage/${item.thumbnail_path}`}
+                                className="w-full h-full object-cover"
+                                alt={item.title}
+                            />
+                        </div>
 
-                                {/* 💡 投稿者名を追加 */}
-                                <p className="text-[12px] text-gray-600 dark:text-zinc-400 mt-1.5 truncate hover:text-black dark:hover:text-white">
-                                    {item.user?.name || '不明なユーザー'}
-                                </p>
+                        {/* 2. 動画情報エリア：余白を最小化 */}
+                        <div className="flex flex-col justify-start min-w-0" style={{ width: 'calc(100% - 168px - 8px)' }}>
+                            {/* タイトル：行間を leading-tight から leading-[1.2] に詰め、2行表示 */}
+                            <h3 className="text-[13px] font-bold leading-[1.2] text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors w-full line-clamp-2">
+                                {item.title}
+                            </h3>
 
-                                {/* 視聴回数 */}
-                                <p className="text-[11px] text-gray-500 mt-0.5">
-                                    {(item.views ?? 0).toLocaleString()} 回視聴
-                                </p>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
+                            {/* 投稿者名：mt-1.5 から mt-0.5 に。さらにフォントサイズを微調整 */}
+                            <p className="text-[11px] text-gray-500 mt-0.5 w-full truncate">
+                                {item.user?.name || '不明なユーザー'}
+                            </p>
+
+                            {/* 視聴回数：投稿者名との隙間をなくす (mt-0) */}
+                            <p className="text-[11px] text-gray-400 mt-0">
+                                {(item.views ?? 0).toLocaleString()} 回視聴
+                            </p>
+                        </div>
+                    </Link>
+                ))}
             </div>
         </div>
     );
