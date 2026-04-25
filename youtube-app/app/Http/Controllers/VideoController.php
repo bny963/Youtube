@@ -141,25 +141,25 @@ class VideoController extends Controller
             ? $video->likes()->where('user_id', Auth::id())->exists()
             : false;
 
-        // 3. 関連動画を取得
+        // 3. 関連動画を取得（ここは正しく with('user') が入っています！）
         $relatedVideos = Video::where('user_id', $video->user_id)
             ->where('id', '!=', $video->id)
-            ->with('user')
+            ->with('user') // 💡 投稿者情報を含める
             ->latest()
             ->limit(10)
             ->get();
 
-        // 4. まとめて返却（💡 カンマを追加して修正）
+        // 4. まとめて返却
         return response()->json([
             'video' => $video,
-            'relatedVideos' => Video::where('id', '!=', $id)->limit(10)->get(),
+            // 💡 ここ！ Video::where... ではなく、上で作った $relatedVideos を使います
+            'relatedVideos' => $relatedVideos,
             'current_user' => auth()->user(),
             'comments' => $video->comments()->with('user')->latest()->get(),
             'is_liked' => $user ? $video->isLikedBy($user) : false,
             'is_subscribed' => $user ? $user->subscriptions()->where('channel_id', $video->user_id)->exists() : false,
         ]);
     }
-
     public function update(UpdateVideoRequest $request, Video $video)
     {
         $this->authorize('update', $video);
