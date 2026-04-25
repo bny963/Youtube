@@ -12,7 +12,6 @@ import {
     UserCircleIcon
 } from '@heroicons/react/24/outline';
 
-// 💡 カラム名に合わせて型を修正
 interface Subscription {
     id: number;
     name: string;
@@ -25,7 +24,6 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
 
     useEffect(() => {
         if (!isOpen) return;
-
         const fetchSubscriptions = async () => {
             try {
                 const res = await axios.get('/api/sidebar/subscriptions');
@@ -50,33 +48,41 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
         <aside
             className={`
                 bg-white dark:bg-[#0f0f0f] border-r dark:border-zinc-800 overflow-y-auto transition-all duration-300 ease-in-out
-                ${isOpen ? 'w-64 opacity-100' : 'w-0 opacity-0 border-none'}
+                ${isOpen ? 'w-64 opacity-100' : 'w-0 opacity-0 border-none pointer-events-none'}
             `}
         >
-            <div className={`${isOpen ? 'block' : 'hidden'} w-64 p-4`}>
+            <div className={`${isOpen ? 'block' : 'hidden'} w-64 p-3`}>
+
+                {/* --- メインメニュー --- */}
                 <nav className="space-y-1">
                     {menuItems.map((item) => (
                         <Link
                             key={item.name}
                             href={item.href}
-                            className="flex items-center gap-4 px-4 py-2.5 text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors font-medium text-sm"
+                            className="flex items-center gap-6 px-3 py-2.5 text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors group"
                         >
-                            <item.icon className="w-5 h-5" />
-                            <span>{item.name}</span>
+                            {/* 💡 直接 style で 24px を指定し、絶対に消えないようにします */}
+                            <div style={{ width: '24px', height: '24px', flexShrink: 0 }} className="flex items-center justify-center">
+                                <item.icon className="w-6 h-6 text-gray-600 dark:text-zinc-300 group-hover:text-black dark:group-hover:text-white" />
+                            </div>
+                            <span className="text-sm font-medium whitespace-nowrap">
+                                {item.name}
+                            </span>
                         </Link>
                     ))}
                 </nav>
 
-                <div className="mt-6 pt-6 border-t dark:border-zinc-800">
-                    <h3 className="px-4 mb-3 text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
+                {/* --- 登録チャンネル --- */}
+                <div className="mt-4 pt-4 border-t dark:border-zinc-800">
+                    <h3 className="px-3 mb-2 text-[14px] font-bold text-gray-900 dark:text-zinc-100">
                         登録チャンネル
                     </h3>
 
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                         {loading ? (
                             [...Array(3)].map((_, i) => (
-                                <div key={i} className="flex items-center gap-4 px-4 py-2 animate-pulse">
-                                    <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-800" />
+                                <div key={i} className="flex items-center gap-6 px-3 py-2 animate-pulse">
+                                    <div style={{ width: '24px', height: '24px', flexShrink: 0 }} className="rounded-full bg-gray-100 dark:bg-zinc-800" />
                                     <div className="h-3 w-24 bg-gray-100 dark:bg-zinc-800 rounded" />
                                 </div>
                             ))
@@ -85,33 +91,33 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
                                 <Link
                                     key={sub.id}
                                     href={`/channels/${sub.id}`}
-                                    className="flex items-center gap-3 px-4 py-1.5 text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm group"
+                                    className="flex items-center gap-6 px-3 py-2 text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors group"
                                 >
-                                    <div className="relative w-6 h-6 min-w-[40px] min-h-[40px] max-w-[24px] max-h-[24px] rounded-full overflow-hidden bg-gray-100 dark:bg-zinc-800 flex-shrink-0">
+                                    {/* 💡 登録チャンネルのアイコンも 24px で直接固定 */}
+                                    <div style={{ width: '24px', height: '24px', flexShrink: 0 }} className="rounded-full overflow-hidden bg-gray-100 dark:bg-zinc-800 relative">
                                         {sub.profile_image_path ? (
                                             <img
                                                 src={`http://localhost/storage/${sub.profile_image_path}`}
                                                 alt=""
-                                                className="absolute inset-0 w-full h-full object-cover" // 💡 親の24pxに絶対従わせる
+                                                className="absolute inset-0 w-full h-full object-cover"
                                             />
                                         ) : (
-                                            <UserCircleIcon className="w-full h-full text-gray-400 p-0.5" />
+                                            <UserCircleIcon className="w-full h-full text-gray-400" />
                                         )}
                                     </div>
-
-                                    {/* チャンネル名 */}
-                                    <span className="truncate flex-1 group-hover:text-black dark:group-hover:text-white">
+                                    <span className="text-sm font-medium truncate flex-1 group-hover:text-black dark:group-hover:text-white">
                                         {sub.name}
                                     </span>
                                 </Link>
                             ))
                         ) : (
-                            <p className="px-4 py-2 text-xs text-gray-500">登録チャンネルなし</p>
+                            <p className="px-3 py-2 text-xs text-gray-500">登録チャンネルなし</p>
                         )}
                     </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t dark:border-zinc-800 px-4">
+                {/* --- 外観設定 --- */}
+                <div className="mt-4 pt-4 border-t dark:border-zinc-800 px-3">
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-500 dark:text-zinc-400">外観</span>
                         <ThemeToggle />
