@@ -57,9 +57,7 @@ export default function UploadPage() {
 
     return (
         <main className="min-h-screen p-4 md:p-8 bg-gray-50 text-gray-900">
-            {/* max-w-2xl から max-w-xl に変更して全体をコンパクトに */}
             <div className="max-w-xl mx-auto space-y-6">
-
                 <div className="flex items-center gap-4">
                     <Link
                         href="/"
@@ -74,12 +72,10 @@ export default function UploadPage() {
                 </div>
 
                 <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-                    {/* テキストサイズを少し下げて圧迫感を減らす */}
                     <p className="text-xs text-gray-500 mb-6">
                         動画ファイルを選択し、タイトル・カテゴリー・サムネイルを設定してください。
                     </p>
 
-                    {/* 要件パネルもコンパクトに */}
                     <div className="mb-6 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
                         <p className="text-xs text-blue-900 font-semibold mb-2">📋 ファイル要件:</p>
                         <ul className="text-xs text-blue-800 space-y-1 ml-1">
