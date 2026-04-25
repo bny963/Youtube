@@ -40,7 +40,7 @@ export default function VideoCard({
             href={`/videos/${video.id}`}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            className="group flex flex-col w-full max-w-[360px] mx-auto sm:mx-0 transition-all"
+            className="group flex flex-col w-full sm:mx-0 transition-all"
         >
             {/* ...（以下、returnの中身はそのまま）... */}
             <div className="relative aspect-video w-full bg-slate-100 rounded-xl overflow-hidden mb-3">
