@@ -62,34 +62,52 @@ export default function ManageVideos() {
                     </div>
                 </div>
 
-                {/* --- 動画リスト（管理用テーブル形式またはグリッド） --- */}
+                {/* --- 動画リスト（管理用グリッド） --- */}
                 {loading ? (
-                    <p>読み込み中...</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[...Array(3)].map((_, i) => (
+                            <div key={i} className="aspect-video bg-gray-200 dark:bg-zinc-800 animate-pulse rounded-xl" />
+                        ))}
+                    </div>
                 ) : videos.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {videos.map((video) => (
-                            <div key={video.id} className="border rounded-xl overflow-hidden group bg-white hover:shadow-md transition-shadow">
+                            <div key={video.id} className="border dark:border-zinc-800 rounded-xl overflow-hidden group bg-white dark:bg-zinc-900 hover:shadow-lg transition-all">
+                                {/* サムネイルエリア */}
                                 <div className="relative aspect-video">
                                     <img
                                         src={`http://localhost/storage/${video.thumbnail_path}`}
                                         alt={video.title}
                                         className="w-full h-full object-cover"
                                     />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                                        <Link href={`/videos/${video.id}`} className="bg-white text-black px-4 py-2 rounded-full text-sm font-bold">
+                                    {/* ホバー時に表示されるオーバーレイ */}
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                        <Link href={`/videos/${video.id}`} className="bg-white text-black px-4 py-2 rounded-full text-sm font-bold hover:bg-gray-200 transition-colors">
                                             視聴
                                         </Link>
                                         <button
                                             onClick={() => handleDelete(video.id)}
-                                            className="bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold"
+                                            className="bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-red-700 transition-colors"
                                         >
                                             削除
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* 情報エリア */}
                                 <div className="p-4">
-                                    <h3 className="font-bold truncate">{video.title}</h3>
-                                    <p className="text-sm text-gray-500">{video.views ?? 0} 回視聴 • {new Date(video.created_at).toLocaleDateString()}</p>
+                                    <h3 className="font-bold truncate dark:text-zinc-100 mb-1">{video.title}</h3>
+                                    <p className="text-sm text-gray-500 dark:text-zinc-400 mb-4">
+                                        {(video.views ?? 0).toLocaleString()} 回視聴 • {new Date(video.created_at).toLocaleDateString()}
+                                    </p>
+
+                                    {/* 💡 編集ボタンを情報エリアの下部に配置して整頓 */}
+                                    <Link
+                                        href={`/videos/${video.id}/edit`}
+                                        className="block text-center w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-black dark:text-zinc-100 rounded-lg text-sm font-bold transition-colors"
+                                    >
+                                        動画を編集
+                                    </Link>
                                 </div>
                             </div>
                         ))}
